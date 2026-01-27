@@ -12,6 +12,9 @@
   <ItemGroup>
     <Compile Include="ParserCombinators.fs" />
     <Compile Include="SExpr.fs" />
+    <Compile Include="Type.fs" />
+    <Compile Include="Id.fs" />
+    <Compile Include="Syntax.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
