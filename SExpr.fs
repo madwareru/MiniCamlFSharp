@@ -121,7 +121,7 @@ module SExpr =
 
               "hello?", SExprId(Seq.toList "hello?")
 
-              "(1 2.0 #f)", SExprList [ SExprInt 1; SExprFloat 2.0; SExprBool false ]
+              "(1 2.51 #f)", SExprList [ SExprInt 1; SExprFloat 2.51; SExprBool false ]
 
               "((1 2 3) (1 2 3) (1 2 3))",
               SExprList
