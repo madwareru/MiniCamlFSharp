@@ -117,6 +117,12 @@ module Parsing =
             let cont = f cont
             Syntax.LetNode(binding, e, cont)
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't' ]
+                            SExpr.SExprList [SExpr.SExprId [ ',' ] ]
+                            SExpr.SExprId [ '=' ]
+                            _
+                            SExpr.SExprId [ 'i'; 'n' ]
+                            _ ] -> failwith "construction of a tuple with 0 elements are not supported"
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't' ]
                             SExpr.SExprList (SExpr.SExprId [ ',' ] :: bindings)
                             SExpr.SExprId [ '=' ]
                             e
@@ -126,6 +132,12 @@ module Parsing =
             let e = f e
             let cont = f cont
             Syntax.LetTuple(bindings, e, cont)
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't'; '-'; 'r'; 'e'; 'c' ]
+                            SExpr.SExprList [SExpr.SExprId _]
+                            SExpr.SExprId [ '=' ]
+                            _
+                            SExpr.SExprId [ 'i'; 'n' ]
+                            _ ] -> failwith "let-rec with 0 args are not supported"
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't'; '-'; 'r'; 'e'; 'c' ]
                             SExpr.SExprList (SExpr.SExprId name :: args)
                             SExpr.SExprId [ '=' ]
@@ -139,6 +151,20 @@ module Parsing =
             }
             let cont = f cont
             Syntax.LetRecNode(fun_def, cont)
+        | SExpr.SExprList (SExpr.SExprId [ ';' ] :: es) ->
+            let rec unwind =
+                function
+                | [e] -> f e
+                | e :: cont ->
+                    let e = f e
+                    // we are saying here that the type of an expr should be Unit
+                    // if it wants to behave like a statement.
+                    let id = Id.gen_tmp Type.UnitType
+                    let cont = unwind cont
+                    Syntax.LetNode((id, Type.UnitType), e, cont)
+                | _ -> failwith "sequence of 0 statements are not supported"
+            unwind es
+        | SExpr.SExprList [_] -> failwith "apply with 0 args are not supported"
         | SExpr.SExprList (foo :: args) ->
             let foo = f foo
             let args = args |> List.map f
