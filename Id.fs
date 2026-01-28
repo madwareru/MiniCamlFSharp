@@ -3,9 +3,9 @@ module mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
 
 module Id =
-    /// Name of a variable
+    /// Тип идентификатора для имён переменных
     type t = string
-    /// Labels for top-level declarations
+    /// Тип идентификатора для меток объявлений верхнего уровня
     type l = L of string
 
     let rec pp_list =
@@ -14,8 +14,10 @@ module Id =
         | [ x ] -> x
         | x :: xs -> x + " " + pp_list xs
 
+    /// Глобальный счётчик для генерации уникальных идентификаторов
     let mutable counter = 0
 
+    /// Используется для достижения уникальности существующих идентификаторов
     let gen_id s =
         counter <- counter + 1
         Printf.sprintf $"%s{s}.%d{counter}"
@@ -31,6 +33,11 @@ module Id =
         | Type.ArrayType _ -> "a"
         | Type.VarType _ -> failwith "can't get id of type var"
 
+    /// Используется для генерации имён временных переменных,
+    /// возникающих в случае если синтаксическая форма раскрывается
+    /// в вид, вводящий промежуточную переменную. Так же эта функция
+    /// может быть использована в проходах компилятора, преобразующих
+    /// код до более простого вида.
     let gen_tmp typ =
         counter <- counter + 1
         Printf.sprintf $"T%s{id_of_typ typ}%d{counter}"

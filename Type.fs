@@ -2,16 +2,17 @@ module mini_caml_fsharp.Type
 
 module Type =
     type t =
-        /// A type of a value which has only one value which itself is ()
+        /// Тип с единственным значением ()
         | UnitType
         | BoolType
         | IntType
         | FloatType
-        /// A type of a function with uncurried arguments
+        /// Тип функции, аргументы которой не каррированы
         | FunType of t list * t
         | TupleType of t list
         | ArrayType of t
-        /// A special type used in places where we should infer the type
+        /// Специальный тип, используемый в местах, где мы должны выводить тип
         | VarType of t option ref
 
+    /// Вспомогательная функция для генерации заглушек в местах где нужен вывод типа
     let gen_empty () = VarType <| ref None

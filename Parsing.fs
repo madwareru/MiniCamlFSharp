@@ -8,8 +8,7 @@ open mini_caml_fsharp.Type
 open mini_caml_fsharp.Syntax
 
 module Parsing =
-    let make_id id_chars =
-        Id.t (new string [| for c in id_chars -> c |])
+    let make_id id_chars = new string [| for c in id_chars -> c |]
 
     let add_typ id_chars =
         let id = make_id id_chars
@@ -159,8 +158,8 @@ module Parsing =
                 | [ e ] -> f e
                 | e :: cont ->
                     let e = f e
-                    // we are saying here that the type of an expr should be Unit
-                    // if it wants to behave like a statement.
+                    // Мы постулируем тут, что тип выражения должен быть Unit,
+                    // иначе говоря, выражение должно вести себя как statement.
                     let id = Id.gen_tmp Type.UnitType
                     let cont = unwind cont
                     Syntax.LetNode((id, Type.UnitType), e, cont)
@@ -168,7 +167,7 @@ module Parsing =
 
             unwind es
         | SExpr.SExprList [ SExpr.SExprId [ '_' ]; e ] ->
-            // (_ $e) becomes (let _ = $e in ())
+            // (_ $e) становится (let _ = $e in ())
             let e = f e
             let id = Id.t "_"
             Syntax.LetNode((id, Type.gen_empty ()), e, Syntax.UnitNode)
@@ -195,6 +194,8 @@ let testParsingSExprToSyntax () =
           "(- 2 2)", Syntax.SubNode(Syntax.IntNode 2, Syntax.IntNode 2)
 
           "(- 2)", Syntax.IntNode -2
+
+          "(not some-var)", Syntax.NotNode(Syntax.VarNode "some-var")
 
           "(not #t)", Syntax.BoolNode false
 
