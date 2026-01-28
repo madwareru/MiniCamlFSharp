@@ -1,5 +1,7 @@
 module mini_caml_fsharp.Parsing
 
+open Microsoft.FSharp.Core
+open NUnit.Framework
 open mini_caml_fsharp.SExpr
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
@@ -12,10 +14,10 @@ module Parsing =
     let add_typ id_chars =
         let id = make_id id_chars
         id, Type.gen_empty ()
-        
+
     let rec parse_bindings =
         function
-        | [SExpr.SExprId binding] -> [add_typ binding]
+        | [ SExpr.SExprId binding ] -> [ add_typ binding ]
         | SExpr.SExprId binding :: rest -> (add_typ binding) :: (parse_bindings rest)
         | _ -> failwith "Failed to parse bindings in let tuple expression"
 
@@ -80,7 +82,7 @@ module Parsing =
             let lhs = f lhs
             let rhs = f rhs
             Syntax.LENode(rhs, lhs)
-        | SExpr.SExprList (SExpr.SExprId [ ','; ] :: args) ->
+        | SExpr.SExprList(SExpr.SExprId [ ',' ] :: args) ->
             let args = args |> List.map f
             Syntax.TupleNode args
         | SExpr.SExprList [ SExpr.SExprId [ '['; ']' ]; e; l ] ->
@@ -106,7 +108,7 @@ module Parsing =
             let then_e = f then_e
             let else_e = f else_e
             Syntax.IfNode(cond, then_e, else_e)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't' ]
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
                             SExpr.SExprId binding
                             SExpr.SExprId [ '=' ]
                             e
@@ -116,14 +118,14 @@ module Parsing =
             let e = f e
             let cont = f cont
             Syntax.LetNode(binding, e, cont)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't' ]
-                            SExpr.SExprList [SExpr.SExprId [ ',' ] ]
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
+                            SExpr.SExprList [ SExpr.SExprId [ ',' ] ]
                             SExpr.SExprId [ '=' ]
                             _
                             SExpr.SExprId [ 'i'; 'n' ]
                             _ ] -> failwith "construction of a tuple with 0 elements are not supported"
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't' ]
-                            SExpr.SExprList (SExpr.SExprId [ ',' ] :: bindings)
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
+                            SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
                             SExpr.SExprId [ '=' ]
                             e
                             SExpr.SExprId [ 'i'; 'n' ]
@@ -132,29 +134,29 @@ module Parsing =
             let e = f e
             let cont = f cont
             Syntax.LetTuple(bindings, e, cont)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't'; '-'; 'r'; 'e'; 'c' ]
-                            SExpr.SExprList [SExpr.SExprId _]
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
+                            SExpr.SExprList [ SExpr.SExprId _ ]
                             SExpr.SExprId [ '=' ]
                             _
                             SExpr.SExprId [ 'i'; 'n' ]
                             _ ] -> failwith "let-rec with 0 args are not supported"
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e' ; 't'; '-'; 'r'; 'e'; 'c' ]
-                            SExpr.SExprList (SExpr.SExprId name :: args)
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
+                            SExpr.SExprList(SExpr.SExprId name :: args)
                             SExpr.SExprId [ '=' ]
                             body
                             SExpr.SExprId [ 'i'; 'n' ]
                             cont ] ->
-            let fun_def : Syntax.fun_def = {
-                name = add_typ name
-                args = parse_bindings args
-                body = f body
-            }
+            let fun_def: Syntax.fun_def =
+                { name = add_typ name
+                  args = parse_bindings args
+                  body = f body }
+
             let cont = f cont
             Syntax.LetRecNode(fun_def, cont)
-        | SExpr.SExprList (SExpr.SExprId [ ';' ] :: es) ->
+        | SExpr.SExprList(SExpr.SExprId [ ';' ] :: es) ->
             let rec unwind =
                 function
-                | [e] -> f e
+                | [ e ] -> f e
                 | e :: cont ->
                     let e = f e
                     // we are saying here that the type of an expr should be Unit
@@ -163,9 +165,40 @@ module Parsing =
                     let cont = unwind cont
                     Syntax.LetNode((id, Type.UnitType), e, cont)
                 | _ -> failwith "sequence of 0 statements are not supported"
+
             unwind es
-        | SExpr.SExprList [_] -> failwith "apply with 0 args are not supported"
-        | SExpr.SExprList (foo :: args) ->
+        | SExpr.SExprList [ SExpr.SExprId [ '_' ]; e ] ->
+            // (_ $e) becomes (let _ = $e in ())
+            let e = f e
+            let id = Id.t "_"
+            Syntax.LetNode((id, Type.gen_empty ()), e, Syntax.UnitNode)
+        | SExpr.SExprList [ _ ] -> failwith "apply with 0 args are not supported"
+        | SExpr.SExprList(foo :: args) ->
             let foo = f foo
             let args = args |> List.map f
             Syntax.ApplyNode(foo, args)
+
+[<Test>]
+let testParsingSExprToSyntax () =
+    let tests: (string * Syntax.t) list =
+        [ "123", Syntax.IntNode 123
+
+          "(+ 2 2)", Syntax.AddNode(Syntax.IntNode 2, Syntax.IntNode 2)
+
+          "(- 2 2)", Syntax.SubNode(Syntax.IntNode 2, Syntax.IntNode 2)
+
+          "(- 2)", Syntax.IntNode -2
+
+          "(not #t)", Syntax.BoolNode false
+
+          "(let x = 2 in (+ x 2))",
+          Syntax.LetNode(
+              ("x", Type.gen_empty ()),
+              Syntax.IntNode 2,
+              Syntax.AddNode(Syntax.VarNode("x"), Syntax.IntNode 2)
+          ) ]
+
+    for source, expected in tests do
+        let parsed_s_expr = SExpr.parse source
+        let parsed_syntax = Parsing.f parsed_s_expr
+        Assert.AreEqual(expected, parsed_syntax)
