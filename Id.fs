@@ -18,7 +18,7 @@ module Id =
 
     let gen_id s =
         counter <- counter + 1
-        Printf.sprintf "%s.%d" s counter
+        Printf.sprintf $"%s{s}.%d{counter}"
 
     let id_of_typ =
         function
@@ -29,8 +29,8 @@ module Id =
         | Type.FunType _ -> "f"
         | Type.TupleType _ -> "t"
         | Type.ArrayType _ -> "a"
-        | Type.VarType _ -> failwith "can't get id of type"
+        | Type.VarType _ -> failwith "can't get id of type var"
 
     let gen_tmp typ =
         counter <- counter + 1
-        Printf.sprintf "T%s%d" (id_of_typ typ) counter
+        Printf.sprintf $"T%s{id_of_typ typ}%d{counter}"

@@ -5,33 +5,32 @@ open mini_caml_fsharp.Type
 
 module Syntax =
     type t =
-        | UnitNode
-        | BoolNode of bool
-        | IntNode of int64
-        | FloatNode of double
-        | NotNode of t
-        | NegNode of t
-        | AddNode of t * t
-        | SubNode of t * t
-        | FNegNode of t
-        | FAddNode of t * t
-        | FSubNode of t * t
-        | FMulNode of t * t
-        | FDivNode of t * t
-        | EqNode of t * t
-        | LENode of t * t
-        | IfNode of t * t * t
-        | LetNode of (Id.t * Type.t) * t * t
-        | VarNode of Id.t
-        | LetRecNode of fundef * t
-        | ApplyNode of t * t list
-        | TupleNode of t list
-        | LetTuple of (Id.t * Type.t) list * t * t
-        | ArrayNode of t * t
-        | GetNode of t * t
-        | PutNode of t * t
-
-    and fundef =
+        | UnitNode // ()
+        | BoolNode of bool // #t | #f
+        | IntNode of int64 // $int-literal
+        | FloatNode of double // $double-literal
+        | NotNode of t // (not $e)
+        | NegNode of t // (- $e)
+        | AddNode of t * t // (+ $e $e)
+        | SubNode of t * t // (- $e $e)
+        | FNegNode of t // (-. $e)
+        | FAddNode of t * t // (+. $e $e)
+        | FSubNode of t * t // (-. $e $e)
+        | FMulNode of t * t // (*. $e $e)
+        | FDivNode of t * t // (/. $e $e)
+        | EqNode of t * t // (= $e $e)
+        | LENode of t * t // (<= $e $e)
+        | IfNode of t * t * t // (if $e then $e else $e)
+        | LetNode of (Id.t * Type.t) * t * t // (let $id = $e in $e)
+        | VarNode of Id.t // $id
+        | LetRecNode of fun_def * t // (let-rec ($id $id...) = $e in $e)
+        | ApplyNode of t * t list // ($e $e...)
+        | TupleNode of t list // (, $e...)
+        | LetTuple of (Id.t * Type.t) list * t * t // (let (, $id...) = $e in $e)
+        | ArrayNode of t * t // ([] $e $e)
+        | GetNode of t * t // ([get] $e $e)
+        | PutNode of t * t * t // ([put] $e $e $e)
+    and fun_def =
         { name: Id.t * Type.t
           args: (Id.t * Type.t) list
           body: t }
