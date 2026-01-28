@@ -181,7 +181,14 @@ module Parsing =
 [<Test>]
 let testParsingSExprToSyntax () =
     let tests: (string * Syntax.t) list =
-        [ "123", Syntax.IntNode 123
+        [ "(let x = 2 in (+ x 2))",
+          Syntax.LetNode(
+              ("x", Type.gen_empty ()),
+              Syntax.IntNode 2,
+              Syntax.AddNode(Syntax.VarNode("x"), Syntax.IntNode 2)
+          )
+
+          "123", Syntax.IntNode 123
 
           "(+ 2 2)", Syntax.AddNode(Syntax.IntNode 2, Syntax.IntNode 2)
 
@@ -191,11 +198,27 @@ let testParsingSExprToSyntax () =
 
           "(not #t)", Syntax.BoolNode false
 
-          "(let x = 2 in (+ x 2))",
+          @"(;
+                (_ (+ 2 2))
+                (_ (- 3 7))
+                (*. 1.5 2.0)
+            )",
           Syntax.LetNode(
-              ("x", Type.gen_empty ()),
-              Syntax.IntNode 2,
-              Syntax.AddNode(Syntax.VarNode("x"), Syntax.IntNode 2)
+              ("Tu1", Type.UnitType),
+              Syntax.LetNode(
+                  ("_", Type.gen_empty ()),
+                  Syntax.AddNode(Syntax.IntNode 2, Syntax.IntNode 2),
+                  Syntax.UnitNode
+              ),
+              Syntax.LetNode(
+                  ("Tu2", Type.UnitType),
+                  Syntax.LetNode(
+                      ("_", Type.gen_empty ()),
+                      Syntax.SubNode(Syntax.IntNode 3, Syntax.IntNode 7),
+                      Syntax.UnitNode
+                  ),
+                  Syntax.FMulNode(Syntax.FloatNode 1.5, Syntax.FloatNode 2.0)
+              )
           ) ]
 
     for source, expected in tests do
