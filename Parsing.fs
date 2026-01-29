@@ -165,7 +165,7 @@ module Parsing =
                             cont ] ->
             let fun_def: Syntax.fun_def =
                 { name = add_typ name
-                  args = [ (Id.gen_tmp Type.UnitType), Type.UnitType ]
+                  args = [ Id.gen_tmp Type.UnitType, Type.UnitType ]
                   body = f body }
 
             let cont = f cont
