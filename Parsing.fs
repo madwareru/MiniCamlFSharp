@@ -17,7 +17,7 @@ module Parsing =
     let rec parse_bindings =
         function
         | [ SExpr.SExprId binding ] -> [ add_typ binding ]
-        | SExpr.SExprId binding :: rest -> (add_typ binding) :: (parse_bindings rest)
+        | SExpr.SExprId binding :: rest -> add_typ binding :: parse_bindings rest
         | _ -> failwith "Failed to parse bindings in let tuple expression"
 
     let rec f =
@@ -121,7 +121,7 @@ module Parsing =
                             e
                             SExpr.SExprId [ 'i'; 'n' ]
                             cont ] ->
-            let binding = (Id.gen_tmp Type.UnitType), Type.UnitType
+            let binding = Id.gen_tmp Type.UnitType, Type.UnitType
             let e = f e
             let cont = f cont
             Syntax.LetNode(binding, e, cont)
@@ -214,7 +214,7 @@ let testParsingSExprToSyntax () =
           "(let-rec (hello-world _) = (println-hello-world ()) in ())",
           Syntax.LetRecNode(
               let fdef: Syntax.fun_def =
-                  { name = ("hello-world", Type.gen_empty ())
+                  { name = "hello-world", Type.gen_empty ()
                     args = [ ("Tu1", Type.UnitType) ]
                     body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ]) } in
 
