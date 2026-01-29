@@ -16,6 +16,7 @@
     <Compile Include="Id.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="Parsing.fs" />
+    <Compile Include="ParsingTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

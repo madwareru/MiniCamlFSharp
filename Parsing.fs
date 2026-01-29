@@ -20,137 +20,131 @@ module Parsing =
         | SExpr.SExprId binding :: rest -> add_typ binding :: parse_bindings rest
         | _ -> failwith "Failed to parse bindings in let tuple expression"
 
-    let rec f =
-        function
+    let mk_reducer ctor f acc next = ctor (acc, f next)
+
+    let fail_form text xs =
+        failwith
+        <| Printf.sprintf $"'%s{text}' form with arity %d{xs |> List.length} is not supported"
+
+    let rec f s_expr =
+        match s_expr with
         | SExpr.SExprId id -> Syntax.VarNode(make_id id)
         | SExpr.SExprList [] -> Syntax.UnitNode
         | SExpr.SExprBool b -> Syntax.BoolNode b
         | SExpr.SExprInt i -> Syntax.IntNode i
         | SExpr.SExprFloat f -> Syntax.FloatNode f
-        | SExpr.SExprList [ SExpr.SExprId [ 'n'; 'o'; 't' ]; SExpr.SExprBool b ] -> Syntax.BoolNode <| not b
-        | SExpr.SExprList [ SExpr.SExprId [ 'n'; 'o'; 't' ]; e ] -> Syntax.NotNode <| f e
-        | SExpr.SExprList [ SExpr.SExprId [ '-' ]; SExpr.SExprInt i ] -> Syntax.IntNode -i
-        | SExpr.SExprList [ SExpr.SExprId [ '-' ]; e ] -> Syntax.NegNode <| f e
-        | SExpr.SExprList [ SExpr.SExprId [ '-'; '.' ]; SExpr.SExprFloat f ] -> Syntax.FloatNode -f
-        | SExpr.SExprList [ SExpr.SExprId [ '-'; '.' ]; e ] -> Syntax.FNegNode <| f e
-        | SExpr.SExprList [ SExpr.SExprId [ '-' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.SubNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '+' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.AddNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '-'; '.' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.FSubNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '+'; '.' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.FAddNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '*'; '.' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.FMulNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '/'; '.' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.FDivNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '=' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.EqNode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '<'; '>' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.NotNode(Syntax.EqNode(lhs, rhs))
-        | SExpr.SExprList [ SExpr.SExprId [ '<' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.NotNode(Syntax.LENode(rhs, lhs))
-        | SExpr.SExprList [ SExpr.SExprId [ '>' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.NotNode(Syntax.LENode(lhs, rhs))
-        | SExpr.SExprList [ SExpr.SExprId [ '<'; '=' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.LENode(lhs, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ '>'; '=' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.LENode(rhs, lhs)
+        | SExpr.SExprList(SExpr.SExprId [ 'n'; 'o'; 't' ] :: exs) ->
+            match exs with
+            | [ SExpr.SExprBool b ] -> Syntax.BoolNode <| not b
+            | [ e ] -> Syntax.NotNode <| f e
+            | _ -> fail_form "not" exs
+        | SExpr.SExprList(SExpr.SExprId [ '-' ] :: exs) ->
+            match exs with
+            | [ SExpr.SExprInt i ] -> Syntax.IntNode -i
+            | [ e ] -> Syntax.NegNode <| f e
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.SubNode f) (f x)
+            | _ -> fail_form "-" exs
+        | SExpr.SExprList(SExpr.SExprId [ '-'; '.' ] :: exs) ->
+            match exs with
+            | [ SExpr.SExprFloat f ] -> Syntax.FloatNode -f
+            | [ e ] -> Syntax.FNegNode <| f e
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.FSubNode f) (f x)
+            | _ -> fail_form "-." exs
+        | SExpr.SExprList(SExpr.SExprId [ '+' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.AddNode f) (f x)
+            | _ -> fail_form "+" exs
+        | SExpr.SExprList(SExpr.SExprId [ '+'; '.' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.FAddNode f) (f x)
+            | _ -> fail_form "+." exs
+        | SExpr.SExprList(SExpr.SExprId [ '*'; '.' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.FMulNode f) (f x)
+            | _ -> fail_form "*." exs
+        | SExpr.SExprList(SExpr.SExprId [ '/'; '.' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.FDivNode f) (f x)
+            | _ -> fail_form "/." exs
+        | SExpr.SExprList(SExpr.SExprId [ '=' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.EqNode(f lhs, f rhs)
+            | _ -> fail_form "=" exs
+        | SExpr.SExprList(SExpr.SExprId [ '<'; '>' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.NotNode(Syntax.EqNode(f lhs, f rhs))
+            | _ -> fail_form "<>" exs
+        | SExpr.SExprList(SExpr.SExprId [ '<' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.NotNode(Syntax.LENode(f rhs, f lhs))
+            | _ -> fail_form "<" exs
+        | SExpr.SExprList(SExpr.SExprId [ '>' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.NotNode(Syntax.LENode(f lhs, f rhs))
+            | _ -> fail_form ">" exs
+        | SExpr.SExprList(SExpr.SExprId [ '<'; '=' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.LENode(f lhs, f rhs)
+            | _ -> fail_form "<=" exs
+        | SExpr.SExprList(SExpr.SExprId [ '>'; '=' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.LENode(f rhs, f lhs)
+            | _ -> fail_form ">=" exs
         | SExpr.SExprList(SExpr.SExprId [ ',' ] :: args) ->
-            let args = args |> List.map f
-            Syntax.TupleNode args
-        | SExpr.SExprList [ SExpr.SExprId [ 'n'; 'e'; 'w'; '['; ']' ]; e; l ] ->
-            let e = f e
-            let l = f l
-            Syntax.ArrayNode(e, l)
-        | SExpr.SExprList [ SExpr.SExprId [ '['; 'g'; 'e'; 't'; ']' ]; a; i ] ->
-            let a = f a
-            let i = f i
-            Syntax.GetNode(a, i)
-        | SExpr.SExprList [ SExpr.SExprId [ '['; 's'; 'e'; 't'; ']' ]; a; i; e ] ->
-            let a = f a
-            let i = f i
-            let e = f e
-            Syntax.PutNode(a, i, e)
+            match args with
+            | [] -> fail_form "," args
+            | _ -> Syntax.TupleNode(args |> List.map f)
+        | SExpr.SExprList(SExpr.SExprId [ 'n'; 'e'; 'w'; '['; ']' ] :: exs) ->
+            match exs with
+            | [ e; l ] -> Syntax.ArrayNode(f e, f l)
+            | _ -> fail_form "new[]" exs
+        | SExpr.SExprList(SExpr.SExprId [ '['; 'g'; 'e'; 't'; ']' ] :: exs) ->
+            match exs with
+            | [ a; i ] -> Syntax.GetNode(f a, f i)
+            | _ -> fail_form "[get]" exs
+        | SExpr.SExprList(SExpr.SExprId [ '['; 's'; 'e'; 't'; ']' ] :: exs) ->
+            match exs with
+            | [ a; i; e ] -> Syntax.PutNode(f a, f i, f e)
+            | _ -> fail_form "[set]" exs
         | SExpr.SExprList [ SExpr.SExprId [ 'i'; 'f' ]
                             cond
                             SExpr.SExprId [ 't'; 'h'; 'e'; 'n' ]
                             then_e
-                            SExpr.SExprId [ 't'; 'h'; 'e'; 'n' ]
-                            else_e ] ->
-            let cond = f cond
-            let then_e = f then_e
-            let else_e = f else_e
-            Syntax.IfNode(cond, then_e, else_e)
-        | SExpr.SExprList [ SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.IfNode(Syntax.EqNode(lhs, Syntax.BoolNode true), Syntax.BoolNode true, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ]; lhs; rhs ] ->
-            let lhs = f lhs
-            let rhs = f rhs
-            Syntax.IfNode(Syntax.EqNode(lhs, Syntax.BoolNode false), Syntax.BoolNode false, rhs)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
-                            SExpr.SExprId [ '_' ]
-                            SExpr.SExprId [ '=' ]
-                            e
-                            SExpr.SExprId [ 'i'; 'n' ]
-                            cont ] ->
-            let binding = Id.gen_tmp Type.UnitType, Type.UnitType
-            let e = f e
-            let cont = f cont
-            Syntax.LetNode(binding, e, cont)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
-                            SExpr.SExprId binding
-                            SExpr.SExprId [ '=' ]
-                            e
-                            SExpr.SExprId [ 'i'; 'n' ]
-                            cont ] ->
-            let binding = add_typ binding
-            let e = f e
-            let cont = f cont
-            Syntax.LetNode(binding, e, cont)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
-                            SExpr.SExprList [ SExpr.SExprId [ ',' ] ]
-                            SExpr.SExprId [ '=' ]
-                            _
-                            SExpr.SExprId [ 'i'; 'n' ]
-                            _ ] -> failwith "deconstruction of a tuple with 0 elements are not supported"
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
-                            SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
-                            SExpr.SExprId [ '=' ]
-                            e
-                            SExpr.SExprId [ 'i'; 'n' ]
-                            cont ] ->
-            let bindings = parse_bindings bindings
-            let e = f e
-            let cont = f cont
-            Syntax.LetTuple(bindings, e, cont)
+                            SExpr.SExprId [ 'e'; 'l'; 's'; 'e' ]
+                            else_e ] -> Syntax.IfNode(f cond, f then_e, f else_e)
+        | SExpr.SExprList(SExpr.SExprId [ 'i'; 'f' ] :: _) -> failwith "incorrect 'if' form found"
+        | SExpr.SExprList(SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.IfNode(f lhs, Syntax.BoolNode true, f rhs)
+            | _ -> fail_form "or-else" exs
+        | SExpr.SExprList(SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ] :: exs) ->
+            match exs with
+            | [ lhs; rhs ] -> Syntax.IfNode(Syntax.NotNode(f lhs), Syntax.BoolNode false, f rhs)
+            | _ -> fail_form "and-then" exs
+        | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't' ] :: exs) ->
+            match exs with
+            | [ SExpr.SExprId [ '_' ]; SExpr.SExprId [ '=' ]; e; SExpr.SExprId [ 'i'; 'n' ]; cont ] ->
+                let binding = Id.gen_tmp Type.UnitType, Type.UnitType
+                let e = f e
+                let cont = f cont
+                Syntax.LetNode(binding, e, cont)
+            | [ SExpr.SExprId binding; SExpr.SExprId [ '=' ]; e; SExpr.SExprId [ 'i'; 'n' ]; cont ] ->
+                let binding = add_typ binding
+                let e = f e
+                let cont = f cont
+                Syntax.LetNode(binding, e, cont)
+            | [ SExpr.SExprList [ SExpr.SExprId [ ',' ] ]; SExpr.SExprId [ '=' ]; _; SExpr.SExprId [ 'i'; 'n' ]; _ ] ->
+                failwith "deconstruction of a tuple with 0 elements are not supported"
+            | [ SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
+                SExpr.SExprId [ '=' ]
+                e
+                SExpr.SExprId [ 'i'; 'n' ]
+                cont ] ->
+                let bindings = parse_bindings bindings
+                let e = f e
+                let cont = f cont
+                Syntax.LetTuple(bindings, e, cont)
+            | _ -> failwith "incorrect 'let' form found"
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
                             SExpr.SExprList [ SExpr.SExprId _ ]
                             SExpr.SExprId [ '=' ]
@@ -168,8 +162,7 @@ module Parsing =
                   args = [ Id.gen_tmp Type.UnitType, Type.UnitType ]
                   body = f body }
 
-            let cont = f cont
-            Syntax.LetRecNode(fun_def, cont)
+            Syntax.LetRecNode(fun_def, f cont)
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
                             SExpr.SExprList(SExpr.SExprId name :: args)
                             SExpr.SExprId [ '=' ]
@@ -183,6 +176,8 @@ module Parsing =
 
             let cont = f cont
             Syntax.LetRecNode(fun_def, cont)
+        | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ] :: _) ->
+            failwith "incorrect 'let-rec' form found"
         | SExpr.SExprList(SExpr.SExprId [ ';' ] :: es) ->
             let rec unwind =
                 function
@@ -200,70 +195,3 @@ module Parsing =
             let foo = f foo
             let args = args |> List.map f
             Syntax.ApplyNode(foo, args)
-
-[<Test>]
-let testParsingSExprToSyntax () =
-    let tests: (string * Syntax.t) list =
-        [ "(let x = 2 in (+ x 2))",
-          Syntax.LetNode(
-              ("x", Type.gen_empty ()),
-              Syntax.IntNode 2,
-              Syntax.AddNode(Syntax.VarNode "x", Syntax.IntNode 2)
-          )
-
-          "(let-rec (hello-world _) = (println-hello-world ()) in ())",
-          Syntax.LetRecNode(
-              let fdef: Syntax.fun_def =
-                  { name = "hello-world", Type.gen_empty ()
-                    args = [ ("Tu1", Type.UnitType) ]
-                    body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ]) } in
-
-              fdef, Syntax.UnitNode
-          )
-
-          @"(
-            let arr = (new[] 0 2) in
-            (;
-              ([set] arr 0 10)
-              ([set] arr 1 20)
-              (+
-                ([get] arr 0)
-                ([get] arr 1))))
-          ",
-          Syntax.LetNode(
-              ("arr", Type.gen_empty ()),
-              Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),
-              Syntax.LetNode(
-                  ("Tu2", Type.UnitType),
-                  Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 0, Syntax.IntNode 10),
-                  Syntax.LetNode(
-                      ("Tu3", Type.UnitType),
-                      Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 1, Syntax.IntNode 20),
-                      Syntax.AddNode(
-                          Syntax.GetNode(Syntax.VarNode "arr", Syntax.IntNode 0),
-                          Syntax.GetNode(Syntax.VarNode "arr", Syntax.IntNode 1)
-                      )
-                  )
-              )
-          )
-
-          "(-. 123.456)", Syntax.FloatNode -123.456
-
-          "123", Syntax.IntNode 123
-
-          "(+ 2 2)", Syntax.AddNode(Syntax.IntNode 2, Syntax.IntNode 2)
-
-          "(- 2 2)", Syntax.SubNode(Syntax.IntNode 2, Syntax.IntNode 2)
-
-          "(- 2)", Syntax.IntNode -2
-
-          "(not some-var)", Syntax.NotNode(Syntax.VarNode "some-var")
-
-          "(not #t)", Syntax.BoolNode false
-
-          "(let _ = 5 in 6)", Syntax.LetNode(("Tu4", Type.UnitType), Syntax.IntNode 5, Syntax.IntNode 6) ]
-
-    for source, expected in tests do
-        let parsed_s_expr = SExpr.parse source
-        let parsed_syntax = Parsing.f parsed_s_expr
-        Assert.AreEqual(expected, parsed_syntax)
