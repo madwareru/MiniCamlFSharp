@@ -107,6 +107,18 @@ module Parsing =
             let then_e = f then_e
             let else_e = f else_e
             Syntax.IfNode(cond, then_e, else_e)
+        | SExpr.SExprList [ SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ]
+                            lhs
+                            rhs ] ->
+            let lhs = f lhs
+            let rhs = f rhs
+            Syntax.IfNode(Syntax.EqNode(lhs, Syntax.BoolNode true), Syntax.BoolNode true, rhs)
+        | SExpr.SExprList [ SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ]
+                            lhs
+                            rhs ] ->
+            let lhs = f lhs
+            let rhs = f rhs
+            Syntax.IfNode(Syntax.EqNode(lhs, Syntax.BoolNode false), Syntax.BoolNode false, rhs)
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
                             SExpr.SExprId ['_']
                             SExpr.SExprId [ '=' ]
