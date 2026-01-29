@@ -84,7 +84,7 @@ module Parsing =
         | SExpr.SExprList(SExpr.SExprId [ ',' ] :: args) ->
             let args = args |> List.map f
             Syntax.TupleNode args
-        | SExpr.SExprList [ SExpr.SExprId [ '['; ']' ]; e; l ] ->
+        | SExpr.SExprList [ SExpr.SExprId [ 'n';'e';'w';'['; ']' ]; e; l ] ->
             let e = f e
             let l = f l
             Syntax.ArrayNode(e, l)
@@ -108,6 +108,16 @@ module Parsing =
             let else_e = f else_e
             Syntax.IfNode(cond, then_e, else_e)
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
+                            SExpr.SExprId ['_']
+                            SExpr.SExprId [ '=' ]
+                            e
+                            SExpr.SExprId [ 'i'; 'n' ]
+                            cont ] ->
+            let binding = (Id.gen_tmp Type.UnitType), Type.UnitType
+            let e = f e
+            let cont = f cont
+            Syntax.LetNode(binding, e, cont)
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
                             SExpr.SExprId binding
                             SExpr.SExprId [ '=' ]
                             e
@@ -122,7 +132,7 @@ module Parsing =
                             SExpr.SExprId [ '=' ]
                             _
                             SExpr.SExprId [ 'i'; 'n' ]
-                            _ ] -> failwith "construction of a tuple with 0 elements are not supported"
+                            _ ] -> failwith "deconstruction of a tuple with 0 elements are not supported"
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't' ]
                             SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
                             SExpr.SExprId [ '=' ]
@@ -139,6 +149,18 @@ module Parsing =
                             _
                             SExpr.SExprId [ 'i'; 'n' ]
                             _ ] -> failwith "let-rec with 0 args are not supported"
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
+                            SExpr.SExprList[SExpr.SExprId name; SExpr.SExprId ['_']]
+                            SExpr.SExprId [ '=' ]
+                            body
+                            SExpr.SExprId [ 'i'; 'n' ]
+                            cont ] ->
+            let fun_def: Syntax.fun_def =
+                { name = add_typ name
+                  args = [(Id.gen_tmp Type.UnitType), Type.UnitType] 
+                  body = f body }
+            let cont = f cont
+            Syntax.LetRecNode(fun_def, cont)
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
                             SExpr.SExprList(SExpr.SExprId name :: args)
                             SExpr.SExprId [ '=' ]
@@ -158,19 +180,12 @@ module Parsing =
                 | [ e ] -> f e
                 | e :: cont ->
                     let e = f e
-                    // Мы постулируем тут, что тип выражения должен быть Unit,
-                    // иначе говоря, выражение должно вести себя как statement.
                     let id = Id.gen_tmp Type.UnitType
                     let cont = unwind cont
                     Syntax.LetNode((id, Type.UnitType), e, cont)
                 | _ -> failwith "sequence of 0 statements are not supported"
 
             unwind es
-        | SExpr.SExprList [ SExpr.SExprId [ '_' ]; e ] ->
-            // (_ $e) становится (let _ = $e in ())
-            let e = f e
-            let id = Id.t "_"
-            Syntax.LetNode((id, Type.gen_empty ()), e, Syntax.UnitNode)
         | SExpr.SExprList [ _ ] -> failwith "apply with 0 args are not supported"
         | SExpr.SExprList(foo :: args) ->
             let foo = f foo
@@ -186,6 +201,8 @@ let testParsingSExprToSyntax () =
               Syntax.IntNode 2,
               Syntax.AddNode(Syntax.VarNode("x"), Syntax.IntNode 2)
           )
+          
+          "(-. 123.456)", Syntax.FloatNode -123.456
 
           "123", Syntax.IntNode 123
 
@@ -198,29 +215,9 @@ let testParsingSExprToSyntax () =
           "(not some-var)", Syntax.NotNode(Syntax.VarNode "some-var")
 
           "(not #t)", Syntax.BoolNode false
-
-          @"(;
-                (_ (+ 2 2))
-                (_ (- 3 7))
-                (*. 1.5 2.0)
-            )",
-          Syntax.LetNode(
-              ("Tu1", Type.UnitType),
-              Syntax.LetNode(
-                  ("_", Type.gen_empty ()),
-                  Syntax.AddNode(Syntax.IntNode 2, Syntax.IntNode 2),
-                  Syntax.UnitNode
-              ),
-              Syntax.LetNode(
-                  ("Tu2", Type.UnitType),
-                  Syntax.LetNode(
-                      ("_", Type.gen_empty ()),
-                      Syntax.SubNode(Syntax.IntNode 3, Syntax.IntNode 7),
-                      Syntax.UnitNode
-                  ),
-                  Syntax.FMulNode(Syntax.FloatNode 1.5, Syntax.FloatNode 2.0)
-              )
-          ) ]
+          
+          "(let _ = 5 in 6)", Syntax.LetNode(("Tu1", Type.UnitType), Syntax.IntNode 5, Syntax.IntNode 6)
+          ]
 
     for source, expected in tests do
         let parsed_s_expr = SExpr.parse source

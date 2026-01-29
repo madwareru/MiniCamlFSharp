@@ -13,47 +13,47 @@ module Syntax =
         | IntNode of int64
         /// $double-literal
         | FloatNode of double 
-        /// (not $e)
+        /// (not $expr), где $expr: boolean
         | NotNode of t
-        /// (- $e)
+        /// (- $expr), где $expr: int
         | NegNode of t
-        /// (+ $e $e)
+        /// (+ $expr0 $expr1), где $expr0, $expr1: int
         | AddNode of t * t
-        /// (- $e $e)
+        /// (- $expr0 $expr1), где $expr0, $expr1: int
         | SubNode of t * t
-        /// (-. $e)
+        /// (-. $expr), где $expr: float
         | FNegNode of t
-        /// (+. $e $e)
+        /// (+. $expr0 $expr1), где $expr0, $expr1: float
         | FAddNode of t * t
-        /// (-. $e $e)
+        /// (-. $expr0 $expr1), где $expr0, $expr1: float
         | FSubNode of t * t
-        /// (*. $e $e)
+        /// (*. $expr0 $expr1), где $expr0, $expr1: float
         | FMulNode of t * t
-        /// (/. $e $e)
+        /// (/. $expr0 $expr1), где $expr0, $expr1: float
         | FDivNode of t * t
-        /// (= $e $e)
+        /// (= $expr0 $expr1), где $expr0, $expr1: int | float
         | EqNode of t * t
-        /// (<= $e $e)
+        /// (<= $expr0 $expr1), где $expr0, $expr1: int | float
         | LENode of t * t
-        /// (if $e then $e else $e)
+        /// (if $expr0 then $expr1 else $expr2), где $expr: boolean, а $expr1 и $expr2 одного типа
         | IfNode of t * t * t
-        /// (let $id = $e in $e)
+        /// (let $id = $expr0 in $expr1)
         | LetNode of (Id.t * Type.t) * t * t
         /// $id
         | VarNode of Id.t
-        /// (let-rec ($id $id...+) = $e in $e)
+        /// (let-rec ($id0 $id1...+) = $expr0 in $expr1)
         | LetRecNode of fun_def * t
-        /// ($e $e...+)
+        /// ($expr0 $expr1...+), где $expr0 имеет тип функции, а количество $expr1 совпадает с её арностью
         | ApplyNode of t * t list
-        /// (, $e...+)
+        /// (, $expr...+)
         | TupleNode of t list
-        /// (let (, $id...+) = $e in $e)
+        /// (let (, $id...+) = $expr0 in $expr1)
         | LetTuple of (Id.t * Type.t) list * t * t
-        /// ([] $e $e)
+        /// (new[] $expr0 $expr1)
         | ArrayNode of t * t
-        /// ([get] $e $e)
+        /// ([get] $expr0 $expr1)
         | GetNode of t * t
-        /// ([put] $e $e $e)
+        /// ([put] $expr0 $expr1 $expr2)
         | PutNode of t * t * t 
     and fun_def =
         { name: Id.t * Type.t
