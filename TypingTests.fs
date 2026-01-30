@@ -1,6 +1,5 @@
 module mini_caml_fsharp.TypingTests
 
-open System
 open Microsoft.FSharp.Core
 open NUnit.Framework
 open mini_caml_fsharp.SExpr
@@ -58,6 +57,26 @@ let private typing_tests: test_case list = [
                 Syntax.VarNode "x",
                 Syntax.VarNode "z"
             )
+        )
+    }
+    {
+        s_expr = "(let-rec (add x y) = (+ x y) in (add 12 30))"
+        expected_syntax = Syntax.LetRecNode(
+            {
+                name = ("add", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
+                args = [("x", Type.IntType); ("y", Type.IntType)]
+                body = Syntax.AddNode(Syntax.VarNode "x", Syntax.VarNode "y")
+            }, Syntax.ApplyNode(Syntax.VarNode "add", [Syntax.IntNode 12; Syntax.IntNode 30])
+        )
+    }
+    {
+        s_expr = "(let-rec (sub x y) = (- x y) in (sub 12 30))"
+        expected_syntax = Syntax.LetRecNode(
+            {
+                name = ("sub", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
+                args = [("x", Type.IntType); ("y", Type.IntType)]
+                body = Syntax.SubNode(Syntax.VarNode "x", Syntax.VarNode "y")
+            }, Syntax.ApplyNode(Syntax.VarNode "sub", [Syntax.IntNode 12; Syntax.IntNode 30])
         )
     }
     // {
