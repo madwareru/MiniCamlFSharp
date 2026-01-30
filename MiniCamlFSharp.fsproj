@@ -14,6 +14,8 @@
     <Compile Include="SExpr.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Id.fs" />
+    <Compile Include="M.fs" />
+    <Compile Include="S.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="ParsingTests.fs" />
