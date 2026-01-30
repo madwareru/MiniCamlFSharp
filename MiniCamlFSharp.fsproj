@@ -20,6 +20,7 @@
     <Compile Include="Parsing.fs" />
     <Compile Include="ParsingTests.fs" />
     <Compile Include="Typing.fs" />
+    <Compile Include="UnificationTests.fs" />
     <Compile Include="TypingTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

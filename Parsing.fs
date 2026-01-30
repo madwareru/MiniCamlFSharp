@@ -19,6 +19,20 @@ module Parsing =
         | SExpr.SExprId binding :: rest -> add_typ binding :: parse_bindings rest
         | _ -> failwith "Failed to parse bindings in let tuple expression"
 
+    let rec parse_t =
+        function
+        | SExpr.SExprId [ 'i' ] -> Type.IntType
+        | SExpr.SExprId [ 'b' ] -> Type.BoolType
+        | SExpr.SExprId [ 'f' ] -> Type.FloatType
+        | SExpr.SExprId [ 'u' ] -> Type.UnitType
+        | SExpr.SExprList [ t; SExpr.SExprId [ 'a'; 'r'; 'r'; 'a'; 'y' ] ] -> Type.ArrayType <| parse_t t
+        | SExpr.SExprList(SExpr.SExprId [ ',' ] :: ts) -> Type.TupleType(ts |> List.map parse_t)
+        | SExpr.SExprList [ SExpr.SExprId [ 'f'; 'n' ]; SExpr.SExprList arg_types; SExpr.SExprId [ '-'; '>' ]; ret_type ] ->
+            let arg_types = arg_types |> List.map parse_t
+            let ret_type = ret_type |> parse_t
+            Type.FunType(arg_types, ret_type)
+        | _ -> failwith "failed to parse a type annotation"
+
     let mk_reducer ctor f acc next = ctor (acc, f next)
 
     let fail_form text xs =
@@ -151,30 +165,41 @@ module Parsing =
                             SExpr.SExprId [ 'i'; 'n' ]
                             _ ] -> failwith "let-rec with 0 args are not supported"
         | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
-                            SExpr.SExprList [ SExpr.SExprId name; SExpr.SExprId [ '_' ] ]
-                            SExpr.SExprId [ '=' ]
-                            body
-                            SExpr.SExprId [ 'i'; 'n' ]
-                            cont ] ->
-            let fun_def: Syntax.fun_def =
-                { name = add_typ name
-                  args = [ Id.gen_tmp Type.UnitType, Type.UnitType ]
-                  body = f body }
-
-            Syntax.LetRecNode(fun_def, f cont)
-        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
                             SExpr.SExprList(SExpr.SExprId name :: args)
                             SExpr.SExprId [ '=' ]
                             body
                             SExpr.SExprId [ 'i'; 'n' ]
                             cont ] ->
-            let fun_def: Syntax.fun_def =
+            Syntax.LetRecNode(
                 { name = add_typ name
                   args = parse_bindings args
-                  body = f body }
+                  body = f body },
+                f cont
+            )
+        | SExpr.SExprList [ SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ]
+                            SExpr.SExprList(SExpr.SExprId name :: args)
+                            SExpr.SExprId [ ':' ]
+                            SExpr.SExprList arg_types
+                            SExpr.SExprId [ '-'; '>' ]
+                            ret_type
+                            SExpr.SExprId [ '=' ]
+                            body
+                            SExpr.SExprId [ 'i'; 'n' ]
+                            cont ] when args.Length = arg_types.Length ->
+            let args = parse_bindings args
+            let arg_types = arg_types |> List.map parse_t
+            let ret_type = ret_type |> parse_t
+            let name_id = make_id name
+            let f_type = Type.FunType(arg_types, ret_type)
 
-            let cont = f cont
-            Syntax.LetRecNode(fun_def, cont)
+            let args = (args, arg_types) ||> List.map2 (fun a t -> (fst a, t))
+
+            Syntax.LetRecNode(
+                { name = (name_id, f_type)
+                  args = args
+                  body = f body },
+                f cont
+            )
         | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ] :: _) ->
             failwith "incorrect 'let-rec' form found"
         | SExpr.SExprList(SExpr.SExprId [ ';' ] :: es) ->

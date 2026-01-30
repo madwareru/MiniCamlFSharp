@@ -106,35 +106,37 @@ module Typing =
 
         // Типы -- типовые переменные и совпадают по
         // значению -> ничего не делаем, подстановка найдена
-        | Type.VarType r1, Type.VarType r2 when r1.Equals(r2) -> ()
+        | Type.VarType r1, Type.VarType r2 when r1.Equals r2 -> ()
 
         // Встречены два типа массивов -> для поиска подстановки
         // рекурсивно унифицируем типы их элементов
-        | Type.ArrayType(t1), Type.ArrayType(t2) -> unify t1 t2
+        | Type.ArrayType t1, Type.ArrayType t2 -> unify t1 t2
 
         // При встрече с двумя функциональными типами перво-наперво
         // сравниваем их арности. Арность не совпадает -> подстановка
         // невозможна. В противном случае рекурсивно поэлементно унифицируем
         // типы аргументов, после чего унифицируем типы возврата
         | Type.FunType(arg_ts_1, ret_t_1), Type.FunType(arg_ts_2, ret_t_2) ->
-            let l_1, l_2 = arg_ts_1 |> List.length, arg_ts_2 |> List.length
+            let l_1 = arg_ts_1 |> List.length
+            let l_2 = arg_ts_2 |> List.length
 
             if l_1 <> l_2 then
                 raise (UnifyException(t1, t2))
-
-            List.iter2 unify arg_ts_1 arg_ts_2
-            unify ret_t_1 ret_t_2
+            else
+                List.iter2 unify arg_ts_1 arg_ts_2
+                unify ret_t_1 ret_t_2
 
         // При встрече двух кортежей сверяем арности. Если арности
         // не совпали -> подстановку найти невозможно. Иначе
         // рекурсивно поэлементно унифицируем типы элементов
         | Type.TupleType ts_1, Type.TupleType ts_2 ->
-            let l_1, l_2 = ts_1 |> List.length, ts_2 |> List.length
+            let l_1 = ts_1 |> List.length
+            let l_2 = ts_2 |> List.length
 
             if l_1 <> l_2 then
                 raise (UnifyException(t1, t2))
-
-            List.iter2 unify ts_1 ts_2
+            else
+                List.iter2 unify ts_1 ts_2
 
         // Если слева или справа встречена непустая типовая переменная,
         // другой операнд унифицируется с ней

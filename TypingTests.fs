@@ -79,33 +79,33 @@ let private typing_tests: test_case list = [
             }, Syntax.ApplyNode(Syntax.VarNode "sub", [Syntax.IntNode 12; Syntax.IntNode 30])
         )
     }
-    // {
-    //     s_expr = @"
-    //         (let-rec (fib x) =
-    //             (if (<= x 1)
-    //                 then 1
-    //                 else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"
-    //     expected_syntax = Syntax.LetRecNode(
-    //         let foo : Syntax.fun_def = {
-    //             name = ("fib", Type.FunType([Type.IntType], Type.IntType))
-    //             args = [("x", Type.IntType)]
-    //             body = Syntax.IfNode(
-    //                 Syntax.LENode(Syntax.VarNode "x", Syntax.IntNode 1),
-    //                 Syntax.IntNode 1,
-    //                 Syntax.AddNode(
-    //                     Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 1)]),
-    //                     Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 2)])
-    //                 )
-    //             )
-    //         } in
-    //         foo, Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.IntNode 10])
-    //     )
-    // }
+    {
+        s_expr = @"
+            (let-rec (fib x) : (i) -> i =
+                (if (<= x 1)
+                    then 1
+                    else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"
+        expected_syntax = Syntax.LetRecNode(
+            let foo : Syntax.fun_def = {
+                name = ("fib", Type.FunType([Type.IntType], Type.IntType))
+                args = [("x", Type.IntType)]
+                body = Syntax.IfNode(
+                    Syntax.LENode(Syntax.VarNode "x", Syntax.IntNode 1),
+                    Syntax.IntNode 1,
+                    Syntax.AddNode(
+                        Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 1)]),
+                        Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 2)])
+                    )
+                )
+            } in
+            foo, Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.IntNode 10])
+        )
+    }
 ]
 
 
 [<Test>]
-let testParsingSExprToSyntax () =
+let testTyping () =
     for case in typing_tests do
         let parsed_syntax =
             case.s_expr

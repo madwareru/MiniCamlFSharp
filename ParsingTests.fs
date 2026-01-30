@@ -277,11 +277,11 @@ let private parsing_tests: test_case list = [
     {
         // В случае объявления функции так же можно "забыть" единственный операнд,
         // это может быть полезным для эмуляции функций без аргументов
-        s_expr = "(let-rec (hello-world _) = (println-hello-world ()) in ())"
+        s_expr = "(let-rec (hello-world _) : (u) -> u = (println-hello-world ()) in ())"
         expected_syntax = Syntax.LetRecNode(
             let fdef: Syntax.fun_def = {
-                name = "hello-world", Type.gen_empty ()
-                args = [ ("Tu2", Type.UnitType) ]
+                name = "hello-world", Type.FunType([Type.UnitType], Type.UnitType)
+                args = [ ("_", Type.UnitType) ]
                 body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ])
             }
             fdef, Syntax.UnitNode
@@ -302,10 +302,10 @@ let private parsing_tests: test_case list = [
             ("arr", Type.gen_empty ()),
             Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),
             Syntax.LetNode(
-                ("Tu3", Type.UnitType),
+                ("Tu2", Type.UnitType),
                 Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 0, Syntax.IntNode 10),
                 Syntax.LetNode(
-                    ("Tu4", Type.UnitType),
+                    ("Tu3", Type.UnitType),
                     Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 1, Syntax.IntNode 20),
                     Syntax.AddNode(
                         Syntax.GetNode(Syntax.VarNode "arr", Syntax.IntNode 0),
