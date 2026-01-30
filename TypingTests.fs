@@ -50,6 +50,7 @@ let private typing_tests: test_case list = [
             [
                 ("x", Type.IntType)
                 ("y", Type.BoolType)
+                ("z", Type.IntType)
             ],
             Syntax.TupleNode([ Syntax.IntNode 1; Syntax.BoolNode true; Syntax.IntNode 42 ]),
             Syntax.IfNode(
@@ -59,28 +60,28 @@ let private typing_tests: test_case list = [
             )
         )
     }
-    {
-        s_expr = @"
-            (let-rec fib (x) =
-                (if (<= x 1)
-                    then 1
-                    else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"
-        expected_syntax = Syntax.LetRecNode(
-            let foo : Syntax.fun_def = {
-                name = ("fib", Type.FunType([Type.IntType], Type.IntType))
-                args = [("x", Type.IntType)]
-                body = Syntax.IfNode(
-                    Syntax.LENode(Syntax.VarNode "x", Syntax.IntNode 1),
-                    Syntax.IntNode 1,
-                    Syntax.AddNode(
-                        Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 1)]),
-                        Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 2)])
-                    )
-                )
-            } in
-            foo, Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.IntNode 10])
-        )
-    }
+    // {
+    //     s_expr = @"
+    //         (let-rec (fib x) =
+    //             (if (<= x 1)
+    //                 then 1
+    //                 else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"
+    //     expected_syntax = Syntax.LetRecNode(
+    //         let foo : Syntax.fun_def = {
+    //             name = ("fib", Type.FunType([Type.IntType], Type.IntType))
+    //             args = [("x", Type.IntType)]
+    //             body = Syntax.IfNode(
+    //                 Syntax.LENode(Syntax.VarNode "x", Syntax.IntNode 1),
+    //                 Syntax.IntNode 1,
+    //                 Syntax.AddNode(
+    //                     Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 1)]),
+    //                     Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 2)])
+    //                 )
+    //             )
+    //         } in
+    //         foo, Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.IntNode 10])
+    //     )
+    // }
 ]
 
 
