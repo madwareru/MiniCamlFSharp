@@ -81,14 +81,74 @@ module Typing =
     /// <param name="r2">Тип, в котором ищется тип <paramref name="r1"/>. Поиск идёт рекурсивно</param>
     /// <returns>true в случае, если вхождение найдено</returns>
     /// </summary>
-    let rec occur (r1 : Type.t) (r2 : Type.t) = (* occur check (caml2html: typing_occur) *)
+    let rec occur r1 r2 = (* occur check (caml2html: typing_occur) *)
         match r2 with
-        | Type.FunType(t2s, t2) -> List.exists (occur r1) t2s || occur r1 t2
-        | Type.TupleType(t2s) -> List.exists (occur r1) t2s
-        | Type.ArrayType(t2) -> occur r1 t2
+        | Type.FunType(arg_ts, ret_t) -> arg_ts |> List.exists (occur r1) || occur r1 ret_t
+        | Type.TupleType(ts) -> List.exists (occur r1) ts
+        | Type.ArrayType(elem_t) -> occur r1 elem_t
         | Type.VarType(r2) when r1.Equals(r2) -> true
         | Type.VarType({ contents = None }) -> false
         | Type.VarType({ contents = Some(t2) }) -> occur r1 t2
         | _ -> false
+        
+    /// <summary>
+    /// Алгоритм унификации.
+    /// Суть его в попытке найти такую подстановку, чтобы два типа были идентичными
+    /// </summary>
+    let rec unify t1 t2 =
+        match t1, t2 with
+        // Типы примитивные и совпадают -> ничего не делаем,
+        // так как подстановка уже найдена
+        | Type.UnitType, Type.UnitType
+        | Type.BoolType, Type.BoolType
+        | Type.IntType, Type.IntType
+        | Type.FloatType, Type.FloatType -> ()
+        
+        // Типы -- типовые переменные и совпадают по
+        // значению -> ничего не делаем, подстановка найдена
+        | Type.VarType r1, Type.VarType r2 when r1.Equals(r2) -> ()
+         
+        // Встречены два типа массивов -> для поиска подстановки
+        // рекурсивно унифицируем типы их элементов 
+        | Type.ArrayType(t1), Type.ArrayType(t2) -> unify t1 t2
+        
+        // При встрече с двумя функциональными типами перво-наперво
+        // сравниваем их арности. Арность не совпадает -> подстановка
+        // невозможна. В противном случае рекурсивно поэлементно унифицируем
+        // типы аргументов, после чего унифицируем типы возврата
+        | Type.FunType(arg_ts_1, ret_t_1), Type.FunType(arg_ts_2, ret_t_2) ->
+            let l_1, l_2 = arg_ts_1 |> List.length, arg_ts_2 |> List.length
+            if l_1 <> l_2 then raise (UnifyException(t1, t2))
+            List.iter2 unify arg_ts_1 arg_ts_2
+            unify ret_t_1 ret_t_2
+        
+        // При встрече двух кортежей сверяем арности. Если арности
+        // не совпали -> подстановку найти невозможно. Иначе
+        // рекурсивно поэлементно унифицируем типы элементов
+        | Type.TupleType ts_1, Type.TupleType ts_2 ->
+            let l_1, l_2 = ts_1 |> List.length, ts_2 |> List.length
+            if l_1 <> l_2 then raise (UnifyException(t1, t2))
+            List.iter2 unify ts_1 ts_2
+            
+        // Если слева или справа встречена непустая типовая переменная,
+        // другой операнд унифицируется с ней
+        | Type.VarType { contents = Some(t1') }, _ -> unify t1' t2
+        | _, Type.VarType({ contents = Some(t2') }) -> unify t1 t2'
+            
+        // Иначе, если левый или правый операнд является пустой типовой
+        // переменной, проверяем другой операнд на наличие цикла, если цикл есть,
+        // значит подстановку найти нелья, иначе считаем, что корректной
+        // подстановкой является такая, где в типовую переменную записывается
+        // тип другого операнда
+        | Type.VarType({ contents = None } as r1), _ ->
+            if occur r1 t2 then raise (UnifyException(t1, t2))
+            r1.Value <- Some(t2)
+        | _, Type.VarType({ contents = None } as r2) ->
+            if occur r2 t1 then raise (UnifyException(t1, t2))
+            r2.Value <- Some(t1)
+        
+        // Во всех остальных случаях имеем дело с несовместимыми типами,
+        // для которых невозможно найти подстановку
+        | _, _ -> raise (UnifyException(t1, t2))
     
     let f (s : t) : t = s //todo
