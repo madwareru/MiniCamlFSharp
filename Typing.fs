@@ -1,6 +1,5 @@
 module mini_caml_fsharp.Typing
 
-open Microsoft.FSharp.Collections
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.Syntax
@@ -103,7 +102,7 @@ module Typing =
         | Type.BoolType, Type.BoolType
         | Type.IntType, Type.IntType
         | Type.FloatType, Type.FloatType -> ()
-        
+
         // При встрече с двумя функциональными типами перво-наперво
         // сравниваем их арности. Арность не совпадает -> подстановка
         // невозможна. В противном случае рекурсивно поэлементно унифицируем
@@ -129,7 +128,7 @@ module Typing =
                 raise (UnifyException(t1, t2))
             else
                 List.iter2 unify ts_1 ts_2
-        
+
         // Встречены два типа массивов -> для поиска подстановки
         // рекурсивно унифицируем типы их элементов
         | Type.ArrayType t1, Type.ArrayType t2 -> unify t1 t2
