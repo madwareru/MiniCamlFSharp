@@ -256,7 +256,7 @@ let private parsing_tests: test_case list = [
         // Тип функции и типы её аргументов должны будут выводиться в дальнейшем
         s_expr = "(let-rec (fac x) = (if (<= x 1.0) then 1.0 else (*. x (fac (-. x 1.0)))) in (fac 6.0))"
         expected_syntax = Syntax.LetRecNode(
-            let fdef: Syntax.fun_def = {
+            {
                 name = "fac", Type.gen_empty ()
                 args = [ ("x", Type.gen_empty ()) ]
                 body = Syntax.IfNode(
@@ -270,28 +270,24 @@ let private parsing_tests: test_case list = [
                         )
                     )
                 )
-            }
-            fdef, Syntax.ApplyNode(Syntax.VarNode "fac", [Syntax.FloatNode 6.0])
+            }, Syntax.ApplyNode(Syntax.VarNode "fac", [Syntax.FloatNode 6.0])
         )
     }
     {
-        // В случае объявления функции так же можно "забыть" единственный операнд,
-        // это может быть полезным для эмуляции функций без аргументов
         s_expr = "(let-rec (hello-world _) : (u) -> u = (println-hello-world ()) in ())"
         expected_syntax = Syntax.LetRecNode(
-            let fdef: Syntax.fun_def = {
+            {
                 name = "hello-world", Type.FunType([Type.UnitType], Type.UnitType)
                 args = [ ("_", Type.UnitType) ]
                 body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ])
-            }
-            fdef, Syntax.UnitNode
+            }, Syntax.UnitNode
         )
     }
     {
         // Описанный в предыдущем разделе оператор для выстраивания в последовательность
         // цепочки из "забываний" вычислений, для написания кода в императивном стиле
         s_expr = @"
-            (let arr = (new[] 0 2) in
+            (let arr : ([] i) = (new[] 0 2) in
                 (;
                 ([set] arr 0 10)
                 ([set] arr 1 20)
@@ -299,7 +295,7 @@ let private parsing_tests: test_case list = [
                     ([get] arr 0)
                     ([get] arr 1))))"
         expected_syntax = Syntax.LetNode(
-            ("arr", Type.gen_empty ()),
+            ("arr", Type.ArrayType(Type.IntType)),
             Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),
             Syntax.LetNode(
                 ("Tu2", Type.UnitType),

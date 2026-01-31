@@ -36,7 +36,7 @@ let private typing_tests: test_case list = [
         )
     }
     {
-        s_expr = "(let x = (, 1 #t) in x)"
+        s_expr = "(let x : (, i _) = (, 1 #t) in x)"
         expected_syntax = Syntax.LetNode(
             ("x", Type.TupleType [Type.IntType; Type.BoolType]),
             Syntax.TupleNode([ Syntax.IntNode 1; Syntax.BoolNode true ]),
@@ -45,6 +45,22 @@ let private typing_tests: test_case list = [
     }
     {
         s_expr = "(let (, x y z) = (, 1 #t 42) in (if y then x else z))"
+        expected_syntax = Syntax.LetTuple(
+            [
+                ("x", Type.IntType)
+                ("y", Type.BoolType)
+                ("z", Type.IntType)
+            ],
+            Syntax.TupleNode([ Syntax.IntNode 1; Syntax.BoolNode true; Syntax.IntNode 42 ]),
+            Syntax.IfNode(
+                Syntax.VarNode "y",
+                Syntax.VarNode "x",
+                Syntax.VarNode "z"
+            )
+        )
+    }
+    {
+        s_expr = "(let (, x y z) : (, _ _ i) = (, 1 #t 42) in (if y then x else z))"
         expected_syntax = Syntax.LetTuple(
             [
                 ("x", Type.IntType)
@@ -70,7 +86,7 @@ let private typing_tests: test_case list = [
         )
     }
     {
-        s_expr = "(let-rec (sub x y) = (- x y) in (sub 12 30))"
+        s_expr = "(let-rec (sub x y) : (_ _) -> _ = (- x y) in (sub 12 30))"
         expected_syntax = Syntax.LetRecNode(
             {
                 name = ("sub", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
@@ -81,7 +97,7 @@ let private typing_tests: test_case list = [
     }
     {
         s_expr = @"
-            (let-rec (fib x) : (i) -> i =
+            (let-rec (fib x) : (_) -> i =
                 (if (<= x 1)
                     then 1
                     else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"

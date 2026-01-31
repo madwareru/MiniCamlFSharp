@@ -103,15 +103,7 @@ module Typing =
         | Type.BoolType, Type.BoolType
         | Type.IntType, Type.IntType
         | Type.FloatType, Type.FloatType -> ()
-
-        // Типы -- типовые переменные и совпадают по
-        // значению -> ничего не делаем, подстановка найдена
-        | Type.VarType r1, Type.VarType r2 when r1.Equals r2 -> ()
-
-        // Встречены два типа массивов -> для поиска подстановки
-        // рекурсивно унифицируем типы их элементов
-        | Type.ArrayType t1, Type.ArrayType t2 -> unify t1 t2
-
+        
         // При встрече с двумя функциональными типами перво-наперво
         // сравниваем их арности. Арность не совпадает -> подстановка
         // невозможна. В противном случае рекурсивно поэлементно унифицируем
@@ -137,6 +129,14 @@ module Typing =
                 raise (UnifyException(t1, t2))
             else
                 List.iter2 unify ts_1 ts_2
+        
+        // Встречены два типа массивов -> для поиска подстановки
+        // рекурсивно унифицируем типы их элементов
+        | Type.ArrayType t1, Type.ArrayType t2 -> unify t1 t2
+
+        // Типы -- типовые переменные и совпадают по
+        // значению -> ничего не делаем, подстановка найдена
+        | Type.VarType r1, Type.VarType r2 when r1.Equals r2 -> ()
 
         // Если слева или справа встречена непустая типовая переменная,
         // другой операнд унифицируется с ней
@@ -151,13 +151,13 @@ module Typing =
         | Type.VarType({ contents = None } as r1), _ ->
             if occur r1 t2 then
                 raise (UnifyException(t1, t2))
-
-            r1.Value <- Some(t2)
+            else
+                r1.Value <- Some(t2)
         | _, Type.VarType({ contents = None } as r2) ->
             if occur r2 t1 then
                 raise (UnifyException(t1, t2))
-
-            r2.Value <- Some(t1)
+            else
+                r2.Value <- Some(t1)
 
         // Во всех остальных случаях имеем дело с несовместимыми типами,
         // для которых невозможно найти подстановку
