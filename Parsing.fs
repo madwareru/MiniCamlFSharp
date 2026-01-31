@@ -193,9 +193,11 @@ module Parsing =
                 match args with
                 | [] -> failwith "let-rec with 0 args are not supported"
                 | _ ->
+                    let bindings = parse_bindings args
+                    let binding_ts = bindings |> List.map snd
                     Syntax.LetRecNode(
-                        { name = add_typ name
-                          args = parse_bindings args
+                        { name = (make_id name, Type.FunType(binding_ts, Type.gen_empty()))
+                          args = bindings
                           body = f body },
                         f cont
                     )

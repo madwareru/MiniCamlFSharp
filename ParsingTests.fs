@@ -257,7 +257,7 @@ let private parsing_tests: test_case list = [
         s_expr = "(let-rec (fac x) = (if (<= x 1.0) then 1.0 else (*. x (fac (-. x 1.0)))) in (fac 6.0))"
         expected_syntax = Syntax.LetRecNode(
             {
-                name = "fac", Type.gen_empty ()
+                name = "fac", Type.FunType([Type.gen_empty ()], Type.gen_empty ())
                 args = [ ("x", Type.gen_empty ()) ]
                 body = Syntax.IfNode(
                     Syntax.LENode(Syntax.VarNode "x", Syntax.FloatNode 1.0),
