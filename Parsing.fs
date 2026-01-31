@@ -137,11 +137,6 @@ module Parsing =
             | _ -> fail_form "and-then" exs
         | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't' ] :: exs) ->
             match exs with
-            | [ SExpr.SExprId [ '_' ]; SExpr.SExprId [ '=' ]; e; SExpr.SExprId [ 'i'; 'n' ]; cont ] ->
-                let binding = Id.gen_tmp Type.UnitType, Type.UnitType
-                let e = f e
-                let cont = f cont
-                Syntax.LetNode(binding, e, cont)
             | [ SExpr.SExprId binding; SExpr.SExprId [ '=' ]; e; SExpr.SExprId [ 'i'; 'n' ]; cont ] ->
                 let binding = add_typ binding
                 let e = f e

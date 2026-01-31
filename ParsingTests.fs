@@ -245,15 +245,10 @@ let private parsing_tests: test_case list = [
         )
     }
     {
-        // При использовании идентификатора _ пользователь подчёркивает,
-        // что ничего не собирается делать с этим значением, он его забывает,
-        // по этой причине мы можем сказать, что у временного значения,
-        // которое связано с этим именем будет тип Unit.
         s_expr = "(let _ = 5 in 6)"
-        expected_syntax = Syntax.LetNode(("Tu1", Type.UnitType), Syntax.IntNode 5, Syntax.IntNode 6)
+        expected_syntax = Syntax.LetNode(("_", Type.gen_empty ()), Syntax.IntNode 5, Syntax.IntNode 6)
     }
     {
-        // Тип функции и типы её аргументов должны будут выводиться в дальнейшем
         s_expr = "(let-rec (fac x) = (if (<= x 1.0) then 1.0 else (*. x (fac (-. x 1.0)))) in (fac 6.0))"
         expected_syntax = Syntax.LetRecNode(
             {
@@ -285,7 +280,9 @@ let private parsing_tests: test_case list = [
     }
     {
         // Описанный в предыдущем разделе оператор для выстраивания в последовательность
-        // цепочки из "забываний" вычислений, для написания кода в императивном стиле
+        // цепочки из "забываний" вычислений, для написания кода в императивном стиле,
+        // данный код требует, чтобы каждый стейтмент был типа Unit, иначе он не пройдёт
+        // этап типизации
         s_expr = @"
             (let arr : ([] i) = (new[] 0 2) in
                 (;
@@ -298,10 +295,10 @@ let private parsing_tests: test_case list = [
             ("arr", Type.ArrayType(Type.IntType)),
             Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),
             Syntax.LetNode(
-                ("Tu2", Type.UnitType),
+                ("Tu1", Type.UnitType),
                 Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 0, Syntax.IntNode 10),
                 Syntax.LetNode(
-                    ("Tu3", Type.UnitType),
+                    ("Tu2", Type.UnitType),
                     Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 1, Syntax.IntNode 20),
                     Syntax.AddNode(
                         Syntax.GetNode(Syntax.VarNode "arr", Syntax.IntNode 0),
