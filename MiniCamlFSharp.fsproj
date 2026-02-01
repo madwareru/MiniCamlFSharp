@@ -22,6 +22,8 @@
     <Compile Include="Typing.fs" />
     <Compile Include="UnificationTests.fs" />
     <Compile Include="TypingTests.fs" />
+    <Compile Include="KNorm.fs" />
+    <Compile Include="KNormalisation.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
