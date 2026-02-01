@@ -24,6 +24,7 @@
     <Compile Include="TypingTests.fs" />
     <Compile Include="KNorm.fs" />
     <Compile Include="KNormalisation.fs" />
+    <Compile Include="KNormalisationTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

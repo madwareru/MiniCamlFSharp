@@ -3,6 +3,7 @@ module mini_caml_fsharp.TypingTests
 open Microsoft.FSharp.Core
 open NUnit.Framework
 open mini_caml_fsharp.SExpr
+open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.Syntax
 open mini_caml_fsharp.Parsing
@@ -123,6 +124,7 @@ let private typing_tests: test_case list = [
 [<Test>]
 let testTyping () =
     for case in typing_tests do
+        Id.counter <- 0
         let parsed_syntax =
             case.s_expr
             |> SExpr.parse

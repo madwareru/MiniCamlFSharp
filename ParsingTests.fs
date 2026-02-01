@@ -3,6 +3,7 @@ module mini_caml_fsharp.ParsingTests
 open Microsoft.FSharp.Core
 open NUnit.Framework
 open mini_caml_fsharp.SExpr
+open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.Syntax
 open mini_caml_fsharp.Parsing
@@ -313,6 +314,7 @@ let private parsing_tests: test_case list = [
 [<Test>]
 let testParsingSExprToSyntax () =
     for case in parsing_tests do
+        Id.counter <- 0
         let parsed_s_expr = SExpr.parse case.s_expr
         let parsed_syntax = Parsing.f parsed_s_expr
         Assert.AreEqual(case.expected_syntax, parsed_syntax)
