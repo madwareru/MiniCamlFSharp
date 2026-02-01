@@ -5,7 +5,6 @@ open NUnit.Framework
 open mini_caml_fsharp.SExpr
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
-open mini_caml_fsharp.Syntax
 open mini_caml_fsharp.Parsing
 open mini_caml_fsharp.Typing
 open mini_caml_fsharp.KNorm
