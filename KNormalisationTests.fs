@@ -113,30 +113,106 @@ let private typing_tests: test_case list = [
                     KNorm.Apply("add", ["Ti1"; "Ti2"])))
         )
     }
-    // {
-    //     s_expr = @"
-    //         (let-rec (fib x) =
-    //             (if (<= x 1)
-    //                 then 1
-    //                 else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))"
-        // expected_syntax = Syntax.LetRecNode(
-        //     let foo : Syntax.fun_def = {
-        //         name = ("fib", Type.FunType([Type.IntType], Type.IntType))
-        //         args = [("x", Type.IntType)]
-        //         body = Syntax.IfNode(
-        //             Syntax.LENode(Syntax.VarNode "x", Syntax.IntNode 1),
-        //             Syntax.IntNode 1,
-        //             Syntax.AddNode(
-        //                 Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 1)]),
-        //                 Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.SubNode(Syntax.VarNode "x", Syntax.IntNode 2)])
-        //             )
-        //         )
-        //     } in
-        //     foo, Syntax.ApplyNode(Syntax.VarNode "fib", [Syntax.IntNode 10])
-        // )
-    // }
+    {
+        s_expr = @"
+            (let-rec (fib x) =
+                (if (<= x 1)
+                    then 1
+                    else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 10))
+        "
+        expected_k_form = KNorm.LetRec(
+            {
+                name = "fib", Type.FunType([Type.IntType], Type.IntType)
+                args = [("x", Type.IntType)]
+                body = KNorm.Let(("Ti2", Type.IntType), KNorm.Int 1,
+                    KNorm.BranchLE("x", "Ti2",
+                        KNorm.Int 1,
+                        KNorm.Let(("Ti5", Type.IntType),
+                            KNorm.Let(("Ti4", Type.IntType),
+                                KNorm.Let(("Ti3", Type.IntType), KNorm.Int 1, KNorm.Sub("x", "Ti3")),
+                                KNorm.Apply("fib", ["Ti4"])
+                            ),
+                            KNorm.Let(("Ti8", Type.IntType),
+                                KNorm.Let(("Ti7", Type.IntType),
+                                    KNorm.Let(("Ti6", Type.IntType), KNorm.Int 2, KNorm.Sub("x", "Ti6")),
+                                    KNorm.Apply("fib", ["Ti7"])
+                                ),
+                                KNorm.Add("Ti5", "Ti8")
+                            )
+                        )
+                    )
+                )
+            }, KNorm.Let(("Ti1", Type.IntType), KNorm.Int 10, KNorm.Apply("fib", ["Ti1"]))
+        )
+    }
+    {
+        // код аналогичен предыдущему тесту, но изначально K-нормализован
+        s_expr = @"
+            (let-rec (fib x) =
+              (let Ti2 = 1 in
+                (if (<= x Ti2)
+                  then 1
+                  else
+                    (let Ti5 = (let Ti4 = (let Ti3 = 1 in (- x Ti3)) in (fib Ti4)) in
+                      (let Ti8 = (let Ti7 = (let Ti6 = 2 in (- x Ti6)) in (fib Ti7)) in
+                        (+ Ti5 Ti8)))))
+              in (let Ti1 = 10 in (fib Ti1)))
+        "
+        expected_k_form = KNorm.LetRec(
+            {
+                name = "fib", Type.FunType([Type.IntType], Type.IntType)
+                args = [("x", Type.IntType)]
+                body = KNorm.Let(("Ti2", Type.IntType), KNorm.Int 1,
+                    KNorm.BranchLE("x", "Ti2",
+                        KNorm.Int 1,
+                        KNorm.Let(("Ti5", Type.IntType),
+                            KNorm.Let(("Ti4", Type.IntType),
+                                KNorm.Let(("Ti3", Type.IntType), KNorm.Int 1, KNorm.Sub("x", "Ti3")),
+                                KNorm.Apply("fib", ["Ti4"])
+                            ),
+                            KNorm.Let(("Ti8", Type.IntType),
+                                KNorm.Let(("Ti7", Type.IntType),
+                                    KNorm.Let(("Ti6", Type.IntType), KNorm.Int 2, KNorm.Sub("x", "Ti6")),
+                                    KNorm.Apply("fib", ["Ti7"])
+                                ),
+                                KNorm.Add("Ti5", "Ti8")
+                            )
+                        )
+                    )
+                )
+            }, KNorm.Let(("Ti1", Type.IntType), KNorm.Int 10, KNorm.Apply("fib", ["Ti1"]))
+        )
+    }
+    {
+        s_expr = @"
+            (let arr : ([] i) = (new[] 0 2) in
+                (;
+                ([set] arr 0 10)
+                ([set] arr 1 20)
+                (+
+                    ([get] arr 0)
+                    ([get] arr 1))))"
+        expected_k_form = KNorm.Let(("arr", Type.ArrayType Type.IntType),
+            KNorm.Let(("Ti3", Type.IntType), KNorm.Int 2,
+                KNorm.Let(("Ti4", Type.IntType), KNorm.Int 0, KNorm.ExtFunApply("create_array", ["Ti3"; "Ti4"]))),
+            KNorm.Let(("Tu1", Type.UnitType),
+                KNorm.Let(("Ti5", Type.IntType), KNorm.Int 0,
+                KNorm.Let(("Ti6", Type.IntType), KNorm.Int 10, KNorm.Put("arr", "Ti5", "Ti6"))),
+                KNorm.Let(("Tu2", Type.UnitType),
+                    KNorm.Let(("Ti7", Type.IntType), KNorm.Int 1,
+                    KNorm.Let(("Ti8", Type.IntType), KNorm.Int 20, KNorm.Put("arr", "Ti7", "Ti8"))),
+                    KNorm.Let(("Ti10", Type.IntType),
+                        KNorm.Let(("Ti9", Type.IntType), KNorm.Int 0, KNorm.Get("arr", "Ti9")),
+                        KNorm.Let(("Ti12", Type.IntType),
+                            KNorm.Let(("Ti11", Type.IntType), KNorm.Int 1, KNorm.Get("arr", "Ti11")),
+                            KNorm.Add("Ti10", "Ti12")
+                        )
+                    )
+                )
+            )
+        )
+    }
 ]
-
 
 [<Test>]
 let testKNormalisation () =
