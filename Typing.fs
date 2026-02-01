@@ -341,7 +341,6 @@ module Typing =
 
     let f e =
         extenv.Value <- M.Empty()
-        let inferred_t = e |> infer (M.Empty())
-        printf $"inferred type of expression result is {inferred_t}\n"
+        let _ = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
         deref_term e
