@@ -48,6 +48,17 @@ let private typing_tests: test_case list = [
         )
     }
     {
+        // код аналогичен предыдущему тесту, но изначально K-нормализован
+        s_expr = "(let x = (let Ti1 = 5 in (let Ti2 = 1 in (, Ti1 Ti2))) in x)"
+        expected_k_form = KNorm.Let(("x", Type.TupleType [Type.IntType; Type.IntType]),
+            KNorm.Let(("Ti1", Type.IntType),
+                KNorm.Int 5,
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 1, KNorm.Tuple(["Ti1"; "Ti2"]))
+            ),
+            KNorm.Var "x"
+        )
+    }
+    {
         s_expr = "(let (, x y z) = (, 10 #t 42) in (if y then x else z))"
         expected_k_form = KNorm.Let(
             ("Tt4", Type.TupleType [Type.IntType; Type.IntType; Type.IntType]),
@@ -59,26 +70,49 @@ let private typing_tests: test_case list = [
                 KNorm.Let(("Ti5", Type.IntType), KNorm.Int 0,
                     KNorm.BranchEq("y", "Ti5", KNorm.Var "z", KNorm.Var "x" ))))
     }
-    // {
-    //     s_expr = "(let-rec (add x y) = (+ x y) in (add 12 30))"
-        // expected_syntax = Syntax.LetRecNode(
-        //     {
-        //         name = ("add", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
-        //         args = [("x", Type.IntType); ("y", Type.IntType)]
-        //         body = Syntax.AddNode(Syntax.VarNode "x", Syntax.VarNode "y")
-        //     }, Syntax.ApplyNode(Syntax.VarNode "add", [Syntax.IntNode 12; Syntax.IntNode 30])
-        // )
-    // }
-    // {
-    //     s_expr = "(let-rec (sub x y) : (_ _) -> _ = (- x y) in (sub 12 30))"
-        // expected_syntax = Syntax.LetRecNode(
-        //     {
-        //         name = ("sub", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
-        //         args = [("x", Type.IntType); ("y", Type.IntType)]
-        //         body = Syntax.SubNode(Syntax.VarNode "x", Syntax.VarNode "y")
-        //     }, Syntax.ApplyNode(Syntax.VarNode "sub", [Syntax.IntNode 12; Syntax.IntNode 30])
-        // )
-    // }
+    {
+        // код аналогичен предыдущему тесту, но изначально K-нормализован
+        s_expr = @"
+            (let Tt4 = (let Ti1 = 10 in (let Ti2 = 1 in (let Ti3 = 42 in (, Ti1 Ti2 Ti3)))) in
+                (let (, x y z) = Tt4 in (let Ti5 = 0 in (if (= y Ti5) then z else x))))
+        "
+        expected_k_form = KNorm.Let(
+            ("Tt4", Type.TupleType [Type.IntType; Type.IntType; Type.IntType]),
+            KNorm.Let(("Ti1", Type.IntType), KNorm.Int 10,
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 1,
+                    KNorm.Let(("Ti3", Type.IntType), KNorm.Int 42,
+                        KNorm.Tuple ["Ti1"; "Ti2"; "Ti3"]))),
+            KNorm.LetTuple(["x", Type.IntType; "y", Type.IntType; "z", Type.IntType], "Tt4",
+                KNorm.Let(("Ti5", Type.IntType), KNorm.Int 0,
+                    KNorm.BranchEq("y", "Ti5", KNorm.Var "z", KNorm.Var "x" ))))
+    }
+    {
+        s_expr = "(let-rec (add x y) = (+ x y) in (add 12 30))"
+        expected_k_form = KNorm.LetRec(
+            {
+                name = "add", Type.FunType([Type.IntType; Type.IntType], Type.IntType)
+                args = ["x", Type.IntType; "y", Type.IntType]
+                body = KNorm.Add("x", "y")
+            },
+            KNorm.Let(("Ti1", Type.IntType), KNorm.Int 12,
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 30,
+                    KNorm.Apply("add", ["Ti1"; "Ti2"])))
+        )
+    }
+    {
+        // код аналогичен предыдущему тесту, но изначально K-нормализован
+        s_expr = "(let-rec (add x y) = (+ x y) in (let Ti1 = 12 in (let Ti2 = 30 in (add Ti1 Ti2))))"
+        expected_k_form = KNorm.LetRec(
+            {
+                name = "add", Type.FunType([Type.IntType; Type.IntType], Type.IntType)
+                args = ["x", Type.IntType; "y", Type.IntType]
+                body = KNorm.Add("x", "y")
+            },
+            KNorm.Let(("Ti1", Type.IntType), KNorm.Int 12,
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 30,
+                    KNorm.Apply("add", ["Ti1"; "Ti2"])))
+        )
+    }
     // {
     //     s_expr = @"
     //         (let-rec (fib x) =
