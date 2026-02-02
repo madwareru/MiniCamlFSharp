@@ -32,6 +32,8 @@
     <Compile Include="BetaReductionTests.fs" />
     <Compile Include="Assoc.fs" />
     <Compile Include="AssocTests.fs" />
+    <Compile Include="Inlining.fs" />
+    <Compile Include="InliningTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
