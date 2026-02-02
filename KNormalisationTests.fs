@@ -12,7 +12,7 @@ open mini_caml_fsharp.KNormalisation
 
 type private test_case = { s_expr: string; expected_k_form: KNorm.t }
 
-let private typing_tests: test_case list = [
+let private k_norm_tests: test_case list = [
     {
         s_expr = "(let x = 5 in x)"
         expected_k_form = KNorm.Let(
@@ -216,7 +216,7 @@ let private typing_tests: test_case list = [
 
 [<Test>]
 let testKNormalisation () =
-    for case in typing_tests do
+    for case in k_norm_tests do
         Id.reset ()
         let k_form =
             case.s_expr
