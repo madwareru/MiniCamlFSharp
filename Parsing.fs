@@ -7,19 +7,19 @@ open mini_caml_fsharp.Type
 open mini_caml_fsharp.Syntax
 
 module Parsing =
-    let make_id id_chars = new string [| for c in id_chars -> c |]
+    let private make_id id_chars = new string [| for c in id_chars -> c |]
 
-    let add_typ id_chars =
+    let private add_typ id_chars =
         let id = make_id id_chars
         id, Type.gen_empty ()
 
-    let rec parse_bindings =
+    let rec private parse_bindings =
         function
         | [ SExpr.SExprId binding ] -> [ add_typ binding ]
         | SExpr.SExprId binding :: rest -> add_typ binding :: parse_bindings rest
         | _ -> failwith "Failed to parse bindings in let tuple expression"
 
-    let rec parse_t =
+    let rec private parse_t =
         function
         | SExpr.SExprId [ 'i' ] -> Type.IntType
         | SExpr.SExprId [ 'b' ] -> Type.BoolType
@@ -27,16 +27,16 @@ module Parsing =
         | SExpr.SExprId [ 'u' ] -> Type.UnitType
         | SExpr.SExprId [ '_' ] -> Type.gen_empty ()
         | SExpr.SExprList [ SExpr.SExprId [ '['; ']' ]; t ] -> Type.ArrayType <| parse_t t
-        | SExpr.SExprList ( SExpr.SExprId [ ',' ] :: ts ) -> Type.TupleType(ts |> List.map parse_t)
+        | SExpr.SExprList(SExpr.SExprId [ ',' ] :: ts) -> Type.TupleType(ts |> List.map parse_t)
         | SExpr.SExprList [ SExpr.SExprId [ 'f'; 'n' ]; SExpr.SExprList arg_types; SExpr.SExprId [ '-'; '>' ]; ret_type ] ->
             let arg_types = arg_types |> List.map parse_t
             let ret_type = ret_type |> parse_t
             Type.FunType(arg_types, ret_type)
         | _ -> failwith "failed to parse a type annotation"
 
-    let mk_reducer ctor f acc next = ctor (acc, f next)
+    let private mk_reducer ctor f acc next = ctor (acc, f next)
 
-    let fail_form text xs =
+    let private fail_form text xs =
         failwith
         <| Printf.sprintf $"'%s{text}' form with arity %d{xs |> List.length} is not supported"
 
@@ -184,14 +184,15 @@ module Parsing =
                 SExpr.SExprId [ '=' ]
                 body
                 SExpr.SExprId [ 'i'; 'n' ]
-                cont] ->
+                cont ] ->
                 match args with
                 | [] -> failwith "let-rec with 0 args are not supported"
                 | _ ->
                     let bindings = parse_bindings args
                     let binding_ts = bindings |> List.map snd
+
                     Syntax.LetRecNode(
-                        { name = (make_id name, Type.FunType(binding_ts, Type.gen_empty()))
+                        { name = (make_id name, Type.FunType(binding_ts, Type.gen_empty ()))
                           args = bindings
                           body = f body },
                         f cont
@@ -204,7 +205,7 @@ module Parsing =
                 SExpr.SExprId [ '=' ]
                 body
                 SExpr.SExprId [ 'i'; 'n' ]
-                cont] when args.Length = arg_types.Length ->
+                cont ] when args.Length = arg_types.Length ->
                 match args with
                 | [] -> failwith "let-rec with 0 args are not supported"
                 | _ ->
@@ -214,6 +215,7 @@ module Parsing =
                     let ret_type = ret_type |> parse_t
                     let name_id = make_id name
                     let f_type = Type.FunType(arg_types, ret_type)
+
                     Syntax.LetRecNode(
                         { name = (name_id, f_type)
                           args = args

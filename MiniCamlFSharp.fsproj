@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Include="ParserCombinators.fs" />
     <Compile Include="SExpr.fs" />
+    <Compile Include="SExprTests.fs" />
     <Compile Include="Type.fs" />
     <Compile Include="Id.fs" />
     <Compile Include="M.fs" />
@@ -28,7 +29,7 @@
     <Compile Include="AlphaConv.fs" />
     <Compile Include="AlphaConvTests.fs" />
     <Compile Include="BetaReduction.fs" />
-    <Compile Include="BetaReductionTests.fs" />  
+    <Compile Include="BetaReductionTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
