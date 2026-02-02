@@ -217,7 +217,7 @@ let private typing_tests: test_case list = [
 [<Test>]
 let testKNormalisation () =
     for case in typing_tests do
-        Id.counter <- 0
+        Id.reset ()
         let k_form =
             case.s_expr
             |> SExpr.parse

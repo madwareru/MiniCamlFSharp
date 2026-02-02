@@ -124,7 +124,7 @@ let private typing_tests: test_case list = [
 [<Test>]
 let testTyping () =
     for case in typing_tests do
-        Id.counter <- 0
+        Id.reset ()
         let parsed_syntax =
             case.s_expr
             |> SExpr.parse
