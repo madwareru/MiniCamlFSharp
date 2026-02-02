@@ -25,6 +25,7 @@
     <Compile Include="KNorm.fs" />
     <Compile Include="KNormalisation.fs" />
     <Compile Include="KNormalisationTests.fs" />
+    <Compile Include="AlphaConv.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
