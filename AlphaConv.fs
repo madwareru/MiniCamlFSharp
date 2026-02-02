@@ -1,6 +1,5 @@
 module mini_caml_fsharp.AlphaConv
 
-open Microsoft.FSharp.Collections
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.KNorm
 open mini_caml_fsharp.M
