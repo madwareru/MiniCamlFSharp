@@ -53,12 +53,14 @@ module BetaReduction =
             | binding' ->
                 let cont' = cont |> beta_reduce env
                 KNorm.Let((id, t), binding', cont')
+
         // Просто делаем рекурсивные вызовы, так как к сожалению повторить
         // логику как у формы Let либо невозможно либо очень сложно
         | KNorm.LetTuple(bs, binding, cont) ->
             let binding' = find binding
             let cont' = cont |> beta_reduce env
             KNorm.LetTuple(bs, binding', cont')
+
         // В случае формы LetRec только рекурсивный вызов для дочерних выражений
         | KNorm.LetRec({ name = xt; args = yts; body = e1 }, e2) ->
             let e1' = e1 |> beta_reduce env
