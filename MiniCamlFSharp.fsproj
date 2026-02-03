@@ -33,6 +33,8 @@
     <Compile Include="Assoc.fs" />
     <Compile Include="AssocTests.fs" />
     <Compile Include="Inlining.fs" />
+    <Compile Include="KNormInterpreter.fs" />
+    <Compile Include="KNormInterpreterTests.fs" />
     <Compile Include="InliningTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
