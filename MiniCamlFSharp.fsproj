@@ -26,6 +26,8 @@
     <Compile Include="KNorm.fs" />
     <Compile Include="KNormalisation.fs" />
     <Compile Include="KNormalisationTests.fs" />
+    <Compile Include="KNormInterpreter.fs" />
+    <Compile Include="KNormInterpreterTests.fs" />
     <Compile Include="AlphaConv.fs" />
     <Compile Include="AlphaConvTests.fs" />
     <Compile Include="BetaReduction.fs" />
@@ -33,9 +35,8 @@
     <Compile Include="Assoc.fs" />
     <Compile Include="AssocTests.fs" />
     <Compile Include="Inlining.fs" />
-    <Compile Include="KNormInterpreter.fs" />
-    <Compile Include="KNormInterpreterTests.fs" />
     <Compile Include="InliningTests.fs" />
+    <Compile Include="ConstFolding.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
