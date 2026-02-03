@@ -56,14 +56,14 @@ module KNormInterpreter =
             not failed
         | value_t.Array { element_type = l_t; value = l_values }, value_t.Array { element_type = r_t; value = r_values } ->
             if l_t <> r_t then
-                failwith "can't compare arrays with incompativle element types"
+                failwith "can't compare arrays with incompatible element types"
             else
                 let failed =
                     (l_values, r_values) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
 
                 not failed
         | value_t.Func f_l, value_t.Func f_r -> f_l = f_r
-        | _ -> failwith "can't compare incompativle types"
+        | _ -> failwith "can't compare incompatible types"
 
     let rec private interpret (env: value_t M) (e: KNorm.t) =
         let rec check_type v t =
