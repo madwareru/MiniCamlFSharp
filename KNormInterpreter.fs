@@ -1,7 +1,5 @@
 module mini_caml_fsharp.KNormInterpreter
 
-open System
-open NUnit.Framework
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.KNorm
 open mini_caml_fsharp.M
