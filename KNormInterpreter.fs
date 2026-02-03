@@ -1,6 +1,7 @@
 module mini_caml_fsharp.KNormInterpreter
 
 open System
+open NUnit.Framework
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.KNorm
 open mini_caml_fsharp.M
@@ -26,31 +27,42 @@ module KNormInterpreter =
         value: value_t array
     }
     
+    let rec element_type v =
+        match v with
+        | value_t.Unit -> Type.UnitType
+        | value_t.Int _ -> Type.IntType
+        | value_t.Float _ -> Type.FloatType
+        | value_t.Tuple values -> Type.TupleType (values |> List.map element_type)
+        | value_t.Array { element_type = t } -> Type.ArrayType t
+        | value_t.Func { func_type = t } -> t
+
     let rec private interpret (env : value_t M) (e : KNorm.t) =
         let rec check_type v t =
-            match v, t with
-            | value_t.Unit, Type.UnitType -> ()
-            | value_t.Int _, Type.IntType -> ()
-            | value_t.Float _, Type.FloatType -> ()
-            | value_t.Tuple values, Type.TupleType value_types ->
+            let v_t = element_type v
+            match v_t, t with
+            | Type.UnitType, Type.UnitType -> ()
+            | Type.IntType, Type.IntType -> ()
+            | Type.FloatType, Type.FloatType -> ()
+            | Type.TupleType values, Type.TupleType value_types ->
                 if values.Length <> value_types.Length then
                     failwith "value has a type of a tuple with wrong arity"
                 else
-                    for v, t in (List.zip values value_types) do
-                        check_type v t
+                    for v_t, t in (List.zip values value_types) do
+                        if v_t <> t then
+                            failwith "tuple element types aren't match!"
                     ()
-            | value_t.Array { element_type = et }, Type.ArrayType t ->
+            | Type.ArrayType et, Type.ArrayType t ->
                 if et <> t then
                     failwith "array element types aren't match"
                 else
                     ()
-            | value_t.Func { func_type = ft }, Type.FunType(arg_ts, ret_t) ->
-                match ft with
-                | Type.FunType(ts, _) when ts.Length <> arg_ts.Length ->
+            | Type.FunType(ts, t), Type.FunType(arg_ts, ret_t) ->
+                match (ts, t) with
+                | ts, _ when ts.Length <> arg_ts.Length ->
                     failwith "function arity aren't match!"
-                | Type.FunType(ts, _) when (List.zip ts arg_ts) |> List.exists (fun (l, r) -> not(l.Equals(r))) ->
+                | ts, _ when (List.zip ts arg_ts) |> List.exists (fun (l, r) -> not(l.Equals(r))) ->
                     failwith "argument types aren't match!"
-                | Type.FunType(_, t) when not(t.Equals(ret_t)) ->
+                | _, t when not(t.Equals(ret_t)) ->
                     failwith "return types aren't match!"
                 | _ -> ()
             | _ -> failwith "types aren't match!"
@@ -192,7 +204,7 @@ module KNormInterpreter =
                              env = func_env
                              body = body } as func ->
                 if args.Length <> arg_names.Length then
-                    failwith "arity aren't match!"
+                    failwith "function application: arity aren't match!"
                 else
                     let mutable env' = func_env.Add name func
                     for name, arg_t, v in (List.zip3 arg_names arg_types args) do
@@ -203,8 +215,8 @@ module KNormInterpreter =
                     match t with
                     | Type.FunType(_, ret_t) ->
                         check_type res ret_t
+                        res
                     | _ -> failwith "unreachable"
-                    res
             | _ -> failwith "can not apply a non function type!"
         | KNorm.ExtFunApply(func_name, args) ->
             match func_name, args with
@@ -217,7 +229,10 @@ module KNormInterpreter =
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Int _ as v) ->
                     value_t.Array { element_type = Type.IntType; value = Array.create (int count) v }
-                | _, _ -> failwith "todo: implement creation of arrays of complex types"
+                | value_t.Int count, v ->
+                    let element_type = element_type v
+                    value_t.Array { element_type = element_type; value = Array.create (int count) v }
+                | _ -> failwith "create_array: count should be of type int"
             | _ -> failwith "unknown external function"
         
     let f e = interpret (M.Empty ()) e

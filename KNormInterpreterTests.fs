@@ -64,7 +64,7 @@ let private k_norm_tests: test_case list = [
 ]
 
 [<Test>]
-let testKNormalisationInterpretation () =
+let testKNormInterpretation () =
     for case in k_norm_tests do
         Id.reset ()
         let k_form =
