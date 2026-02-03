@@ -287,11 +287,11 @@ let private parsing_tests: test_case list = [
         s_expr = @"
             (let arr : ([] i) = (new[] 0 2) in
                 (;
-                ([set] arr 0 10)
-                ([set] arr 1 20)
+                (set[] arr 0 <- 10)
+                (set[] arr 1 <- 20)
                 (+
-                    ([get] arr 0)
-                    ([get] arr 1))))"
+                    (get[] arr 0)
+                    (get[] arr 1))))"
         expected_syntax = Syntax.LetNode(
             ("arr", Type.ArrayType(Type.IntType)),
             Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),

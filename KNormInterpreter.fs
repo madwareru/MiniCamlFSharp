@@ -49,18 +49,14 @@ module KNormInterpreter =
             match cmp with
             | EQ -> lhs = rhs
             | LE -> lhs <= rhs
-        | value_t.Tuple l_values, value_t.Tuple r_values when l_values.Length = r_values.Length ->
-            let failed =
-                (l_values, r_values) ||> List.exists2 (fun l r -> not (cmp_values cmp l r))
-
+        | value_t.Tuple l_vs, value_t.Tuple r_vs when l_vs.Length = r_vs.Length ->
+            let failed = (l_vs, r_vs) ||> List.exists2 (fun l r -> not (cmp_values cmp l r))
             not failed
-        | value_t.Array { element_type = l_t; value = l_values }, value_t.Array { element_type = r_t; value = r_values } ->
+        | value_t.Array { element_type = l_t; value = l_vs }, value_t.Array { element_type = r_t; value = r_vs } ->
             if l_t <> r_t then
                 failwith "can't compare arrays with incompatible element types"
             else
-                let failed =
-                    (l_values, r_values) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
-
+                let failed = (l_vs, r_vs) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
                 not failed
         | value_t.Func f_l, value_t.Func f_r -> f_l = f_r
         | _ -> failwith "can't compare incompatible types"
@@ -113,7 +109,7 @@ module KNormInterpreter =
         | KNorm.Neg op ->
             match lookup_var op with
             | value_t.Int i -> value_t.Int -i
-            | _ -> failwith "can't da an int negate of a non int type!"
+            | _ -> failwith "can't do an int negate of a non int type!"
         | KNorm.Add(lhs, rhs) ->
             match lookup_var lhs, lookup_var rhs with
             | value_t.Int lhs, value_t.Int rhs -> value_t.Int(lhs + rhs)
@@ -127,7 +123,7 @@ module KNormInterpreter =
         | KNorm.FNeg op ->
             match lookup_var op with
             | value_t.Float f -> value_t.Float -f
-            | _ -> failwith "can't da a float negate of a non float type!"
+            | _ -> failwith "can't do a float negate of a non float type!"
         | KNorm.FAdd(lhs, rhs) ->
             match lookup_var lhs, lookup_var rhs with
             | value_t.Float lhs, value_t.Float rhs -> value_t.Float(lhs + rhs)
@@ -249,22 +245,18 @@ module KNormInterpreter =
             | "create_float_array", [ count; v ] ->
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Float _ as v) ->
-                    value_t.Array
-                        { element_type = Type.FloatType
-                          value = Array.create (int count) v }
+                    let arr = Array.create (int count) v
+                    value_t.Array { element_type = Type.FloatType; value = arr }
                 | _ -> failwith "create_float_array: count should be of type int and value should be of type float"
             | "create_array", [ count; v ] ->
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Int _ as v) ->
-                    value_t.Array
-                        { element_type = Type.IntType
-                          value = Array.create (int count) v }
+                    let arr = Array.create (int count) v
+                    value_t.Array { element_type = Type.IntType; value = arr }
                 | value_t.Int count, v ->
                     let element_type = element_type v
-
-                    value_t.Array
-                        { element_type = element_type
-                          value = Array.create (int count) v }
+                    let arr = Array.create (int count) v
+                    value_t.Array{ element_type = element_type; value = arr }
                 | _ -> failwith "create_array: count should be of type int"
             | _ -> failwith "unknown external function"
 

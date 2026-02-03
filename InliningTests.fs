@@ -13,6 +13,7 @@ open mini_caml_fsharp.AlphaConv
 open mini_caml_fsharp.BetaReduction
 open mini_caml_fsharp.Assoc
 open mini_caml_fsharp.Inlining
+open mini_caml_fsharp.KNormInterpreter
 
 type private test_case = { s_expr: string; expected_k_form: KNorm.t }
 
@@ -46,8 +47,14 @@ let testInlining() =
             |> Parsing.f
             |> Typing.f
             |> KNormalisation.f
+        let converted =
+            k_form
             |> AlphaConv.f
             |> BetaReduction.f
             |> Assoc.f
             |> Inlining.f 45
-        Assert.AreEqual(case.expected_k_form, k_form)
+        Assert.AreNotEqual(k_form, converted)
+        Assert.AreEqual(case.expected_k_form, converted)
+        let result = k_form |> KNormInterpreter.f
+        let result_after_conv = converted |> KNormInterpreter.f
+        Assert.AreEqual(result, result_after_conv)

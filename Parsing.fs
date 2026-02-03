@@ -112,14 +112,14 @@ module Parsing =
             match exs with
             | [ e; l ] -> Syntax.ArrayNode(f e, f l)
             | _ -> fail_form "new[]" exs
-        | SExpr.SExprList(SExpr.SExprId [ '['; 'g'; 'e'; 't'; ']' ] :: exs) ->
+        | SExpr.SExprList(SExpr.SExprId [ 'g'; 'e'; 't'; '['; ']' ] :: exs) ->
             match exs with
             | [ a; i ] -> Syntax.GetNode(f a, f i)
-            | _ -> fail_form "[get]" exs
-        | SExpr.SExprList(SExpr.SExprId [ '['; 's'; 'e'; 't'; ']' ] :: exs) ->
+            | _ -> fail_form "get[]" exs
+        | SExpr.SExprList(SExpr.SExprId [ 's'; 'e'; 't'; '['; ']' ] :: exs) ->
             match exs with
-            | [ a; i; e ] -> Syntax.PutNode(f a, f i, f e)
-            | _ -> fail_form "[set]" exs
+            | [ a; i; SExpr.SExprId [ '<'; '-' ]; e ] -> Syntax.PutNode(f a, f i, f e)
+            | _ -> fail_form "set[]" exs
         | SExpr.SExprList [ SExpr.SExprId [ 'i'; 'f' ]
                             cond
                             SExpr.SExprId [ 't'; 'h'; 'e'; 'n' ]

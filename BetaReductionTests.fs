@@ -24,11 +24,28 @@ let private beta_reduce_tests: test_case list = [
         )
     }
     {
-       s_expr = "(let x = #t in (let y = x in y))"
-       expected_k_form = KNorm.Let(
-           ("x.1", Type.IntType),
-           KNorm.Int 1,
-           KNorm.Var "x.1"
+        s_expr = "(let x = 5 in (- x))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.IntType),
+            KNorm.Int 5,
+            KNorm.Neg "x.1"
+        )
+    }
+    {
+        s_expr = "(let x = #t in (let y = x in y))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.IntType),
+            KNorm.Int 1,
+            KNorm.Var "x.1"
+       )
+    }
+    {
+        s_expr = "(let x = #t in (let y = x in (not y)))"
+        expected_k_form = KNorm.Let(("x.2", Type.IntType),
+            KNorm.Int 1,
+            KNorm.Let(("Ti1.4", Type.IntType), KNorm.Int 0,
+                KNorm.BranchEq("x.2", "Ti1.4", KNorm.Int 1, KNorm.Int 0)
+            )
        )
     }
     {
@@ -37,6 +54,46 @@ let private beta_reduce_tests: test_case list = [
             ("x.1", Type.IntType),
             KNorm.Int 5,
             KNorm.Add("x.1", "x.1")
+        )
+    }
+    {
+        s_expr = "(let x = 5 in (let y = x in (let z = y in (- z x))))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.IntType),
+            KNorm.Int 5,
+            KNorm.Sub("x.1", "x.1")
+        )
+    }
+    {
+        s_expr = "(let x = 5.0 in (let y = x in (let z = y in (+. z x))))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.FloatType),
+            KNorm.Float 5.0,
+            KNorm.FAdd("x.1", "x.1")
+        )
+    }
+    {
+        s_expr = "(let x = 5. in (let y = x in (let z = y in (-. z x))))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.FloatType),
+            KNorm.Float 5.0,
+            KNorm.FSub("x.1", "x.1")
+        )
+    }
+    {
+        s_expr = "(let x = 5.0 in (let y = x in (let z = y in (*. z x))))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.FloatType),
+            KNorm.Float 5.0,
+            KNorm.FMul("x.1", "x.1")
+        )
+    }
+    {
+        s_expr = "(let x = 5. in (let y = x in (let z = y in (/. z x))))"
+        expected_k_form = KNorm.Let(
+            ("x.1", Type.FloatType),
+            KNorm.Float 5.0,
+            KNorm.FDiv("x.1", "x.1")
         )
     }
 ]
