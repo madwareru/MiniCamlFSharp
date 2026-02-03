@@ -14,31 +14,63 @@ module KNormInterpreter =
         | Tuple of value_t list
         | Array of array_t
         | Func of func_t
-    and func_t = {
-        recursive_name: string
-        func_type: Type.t
-        arg_names: string list
-        arg_types: Type.t list
-        env: value_t M
-        body: KNorm.t
-    }
-    and array_t = {
-        element_type: Type.t
-        value: value_t array
-    }
-    
+
+    and func_t =
+        { recursive_name: string
+          func_type: Type.t
+          arg_names: string list
+          arg_types: Type.t list
+          env: value_t M
+          body: KNorm.t }
+
+    and array_t =
+        { element_type: Type.t
+          value: value_t array }
+
     let rec element_type v =
         match v with
         | value_t.Unit -> Type.UnitType
         | value_t.Int _ -> Type.IntType
         | value_t.Float _ -> Type.FloatType
-        | value_t.Tuple values -> Type.TupleType (values |> List.map element_type)
+        | value_t.Tuple values -> Type.TupleType(values |> List.map element_type)
         | value_t.Array { element_type = t } -> Type.ArrayType t
         | value_t.Func { func_type = t } -> t
 
-    let rec private interpret (env : value_t M) (e : KNorm.t) =
+    type private Comparison =
+        | EQ
+        | LE
+
+    let rec private cmp_values cmp l r =
+        match l, r with
+        | value_t.Unit, value_t.Unit -> true
+        | value_t.Int lhs, value_t.Int rhs ->
+            match cmp with
+            | EQ -> lhs = rhs
+            | LE -> lhs <= rhs
+        | value_t.Float lhs, value_t.Float rhs ->
+            match cmp with
+            | EQ -> lhs = rhs
+            | LE -> lhs <= rhs
+        | value_t.Tuple l_values, value_t.Tuple r_values when l_values.Length = r_values.Length ->
+            let failed =
+                (l_values, r_values) ||> List.exists2 (fun l r -> not (cmp_values cmp l r))
+
+            not failed
+        | value_t.Array { element_type = l_t; value = l_values }, value_t.Array { element_type = r_t; value = r_values } ->
+            if l_t <> r_t then
+                failwith "can't compare arrays with incompativle element types"
+            else
+                let failed =
+                    (l_values, r_values) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
+
+                not failed
+        | value_t.Func f_l, value_t.Func f_r -> f_l = f_r
+        | _ -> failwith "can't compare incompativle types"
+
+    let rec private interpret (env: value_t M) (e: KNorm.t) =
         let rec check_type v t =
             let v_t = element_type v
+
             match v_t, t with
             | Type.UnitType, Type.UnitType -> ()
             | Type.IntType, Type.IntType -> ()
@@ -50,6 +82,7 @@ module KNormInterpreter =
                     for v_t, t in (List.zip values value_types) do
                         if v_t <> t then
                             failwith "tuple element types aren't match!"
+
                     ()
             | Type.ArrayType et, Type.ArrayType t ->
                 if et <> t then
@@ -58,20 +91,18 @@ module KNormInterpreter =
                     ()
             | Type.FunType(ts, t), Type.FunType(arg_ts, ret_t) ->
                 match (ts, t) with
-                | ts, _ when ts.Length <> arg_ts.Length ->
-                    failwith "function arity aren't match!"
-                | ts, _ when (List.zip ts arg_ts) |> List.exists (fun (l, r) -> not(l.Equals(r))) ->
+                | ts, _ when ts.Length <> arg_ts.Length -> failwith "function arity aren't match!"
+                | ts, _ when (List.zip ts arg_ts) |> List.exists (fun (l, r) -> not (l.Equals(r))) ->
                     failwith "argument types aren't match!"
-                | _, t when not(t.Equals(ret_t)) ->
-                    failwith "return types aren't match!"
+                | _, t when not (t.Equals(ret_t)) -> failwith "return types aren't match!"
                 | _ -> ()
             | _ -> failwith "types aren't match!"
-        
+
         let lookup_var var_name =
             match env.TryFind var_name with
             | Some v -> v
             | _ -> failwithf $"name %s{var_name} not found in an environment!"
-        
+
         match e with
         // Простые литералы:
         | KNorm.Unit -> value_t.Unit
@@ -79,7 +110,7 @@ module KNormInterpreter =
         | KNorm.Float f -> value_t.Float f
         | KNorm.Var var_name -> lookup_var var_name
         | KNorm.Tuple ops -> value_t.Tuple(ops |> List.map lookup_var)
-        
+
         // Операции над целыми:
         | KNorm.Neg op ->
             match lookup_var op with
@@ -93,7 +124,7 @@ module KNormInterpreter =
             match lookup_var lhs, lookup_var rhs with
             | value_t.Int lhs, value_t.Int rhs -> value_t.Int(lhs - rhs)
             | _ -> failwith "can't do an int subtraction of non int types!"
-        
+
         // Операции над числами с плавающей запятой:
         | KNorm.FNeg op ->
             match lookup_var op with
@@ -115,7 +146,7 @@ module KNormInterpreter =
             match lookup_var lhs, lookup_var rhs with
             | value_t.Float lhs, value_t.Float rhs -> value_t.Float(lhs / rhs)
             | _ -> failwith "can't do an float subtraction of non float types!"
-            
+
         // Операции над массивами:
         | KNorm.ExtArray _ -> failwith "todo: ext array"
         | KNorm.Get(arr_name, ix) ->
@@ -136,7 +167,7 @@ module KNormInterpreter =
                     value_t.Unit
                 | _ -> failwith "an array index should be of type int!"
             | _ -> failwith "can't do an array put on a non array type!"
-            
+
         // Связывания имён:
         | KNorm.Let((name, t), body, cont) ->
             let res = body |> interpret env
@@ -151,49 +182,43 @@ module KNormInterpreter =
                 else
                     let bound_names, bound_types = List.unzip bs
                     let mutable env' = env
-                    
+
                     for b_name, b_type, v in (List.zip3 bound_names bound_types vals) do
                         check_type v b_type
                         env' <- env'.Add b_name v
+
                     cont |> interpret env'
             | _ -> failwith "value of a let binding should be of tuple type!"
         | KNorm.LetRec({ name = (name, t)
                          args = args
-                         body = body }, cont ) ->
+                         body = body },
+                       cont) ->
             let arg_names, arg_types = args |> List.unzip
-            let v = value_t.Func { recursive_name = name
-                                   func_type = t
-                                   arg_names = arg_names
-                                   arg_types = arg_types
-                                   env = env
-                                   body = body }
+
+            let v =
+                value_t.Func
+                    { recursive_name = name
+                      func_type = t
+                      arg_names = arg_names
+                      arg_types = arg_types
+                      env = env
+                      body = body }
+
             let env' = env.Add name v
             cont |> interpret env'
-            
+
         // Ветвления:
         | KNorm.BranchEq(lhs, rhs, then_e, else_e) ->
-            match lookup_var lhs, lookup_var rhs with
-            | value_t.Unit, value_t.Unit -> then_e |> interpret env
-            | value_t.Int lhs, value_t.Int rhs when lhs = rhs ->
+            if (lookup_var lhs, lookup_var rhs) ||> cmp_values Comparison.EQ then
                 then_e |> interpret env
-            | value_t.Float lhs, value_t.Float rhs when lhs = rhs ->
-                then_e |> interpret env
-            | value_t.Int _, value_t.Int _
-            | value_t.Float _, value_t.Float _ ->
+            else
                 else_e |> interpret env
-            | _ -> failwith "todo: implement comparison of complex types"
         | KNorm.BranchLE(lhs, rhs, then_e, else_e) ->
-            match lookup_var lhs, lookup_var rhs with
-            | value_t.Unit, value_t.Unit -> then_e |> interpret env
-            | value_t.Int lhs, value_t.Int rhs when lhs <= rhs ->
+            if (lookup_var lhs, lookup_var rhs) ||> cmp_values Comparison.LE then
                 then_e |> interpret env
-            | value_t.Float lhs, value_t.Float rhs when lhs <= rhs ->
-                then_e |> interpret env
-            | value_t.Int _, value_t.Int _
-            | value_t.Float _, value_t.Float _ ->
+            else
                 else_e |> interpret env
-            | _ -> failwith "todo: implement comparison of complex types"
-            
+
         // Применения функций:
         | KNorm.Apply(func_name, args) ->
             match lookup_var func_name with
@@ -207,11 +232,14 @@ module KNormInterpreter =
                     failwith "function application: arity aren't match!"
                 else
                     let mutable env' = func_env.Add name func
+
                     for name, arg_t, v in (List.zip3 arg_names arg_types args) do
                         let v' = lookup_var v
                         check_type v' arg_t
                         env' <- env'.Add name v'
+
                     let res = body |> interpret env'
+
                     match t with
                     | Type.FunType(_, ret_t) ->
                         check_type res ret_t
@@ -220,19 +248,26 @@ module KNormInterpreter =
             | _ -> failwith "can not apply a non function type!"
         | KNorm.ExtFunApply(func_name, args) ->
             match func_name, args with
-            | "create_float_array", [count; v] ->
+            | "create_float_array", [ count; v ] ->
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Float _ as v) ->
-                    value_t.Array { element_type = Type.FloatType; value = Array.create (int count) v }
+                    value_t.Array
+                        { element_type = Type.FloatType
+                          value = Array.create (int count) v }
                 | _ -> failwith "create_float_array: count should be of type int and value should be of type float"
-            | "create_array", [count; v] ->
+            | "create_array", [ count; v ] ->
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Int _ as v) ->
-                    value_t.Array { element_type = Type.IntType; value = Array.create (int count) v }
+                    value_t.Array
+                        { element_type = Type.IntType
+                          value = Array.create (int count) v }
                 | value_t.Int count, v ->
                     let element_type = element_type v
-                    value_t.Array { element_type = element_type; value = Array.create (int count) v }
+
+                    value_t.Array
+                        { element_type = element_type
+                          value = Array.create (int count) v }
                 | _ -> failwith "create_array: count should be of type int"
             | _ -> failwith "unknown external function"
-        
-    let f e = interpret (M.Empty ()) e
+
+    let f e = interpret (M.Empty()) e
