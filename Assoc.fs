@@ -42,6 +42,9 @@ module Assoc =
                 cont'
             )
         | KNorm.Let(root_name, binding, root_cont) ->
+            let binding' = f binding
+            let root_cont' = f root_cont
+            
             /// Функция для "утапливания" корневого (let root_name = ... in root_cont)
             /// внутрь связанного выражения. Пока в аргументе находится связывание
             /// имён с продолжением, происходит рекурсивный заход дальше внутрь
@@ -50,8 +53,6 @@ module Assoc =
                 | KNorm.Let(name, binding, cont) -> KNorm.Let(name, binding, ins cont)
                 | KNorm.LetTuple(bound_names, binding, cont) -> KNorm.LetTuple(bound_names, binding, ins cont)
                 | KNorm.LetRec(fundef, cont) -> KNorm.LetRec(fundef, ins cont)
-                | e -> KNorm.Let(root_name, e, root_cont)
-
-            let binding' = f binding
+                | e -> KNorm.Let(root_name, e, root_cont')
             ins binding'
         | _ -> e

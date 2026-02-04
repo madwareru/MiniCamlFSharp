@@ -60,6 +60,54 @@ let private assoc_tests: test_case list = [
             KNorm.Apply("add'", ["Ti1"; "Ti2"]))))
         )
     }
+    {
+        s_expr = @"
+            (let a = 3 in
+            (let b = 5 in
+            (if (<= a b)
+                then (let c = (let d = (let e = 1 in (+ e 1)) in (+ d d)) in (- c))
+                else (let f = (let (, g h) = (, 10 32) in (+ g h)) in f))))
+        "
+        expected_k_form =
+            KNorm.Let(("a", Type.IntType), KNorm.Int 3,
+            KNorm.Let(("b", Type.IntType), KNorm.Int 5,
+            KNorm.BranchLE("a", "b",
+                KNorm.Let(("e", Type.IntType), KNorm.Int 1,
+                KNorm.Let(("Ti1", Type.IntType), KNorm.Int 1,
+                KNorm.Let(("d", Type.IntType), KNorm.Add("e", "Ti1"),
+                KNorm.Let(("c", Type.IntType), KNorm.Add("d", "d"),
+                KNorm.Neg "c")))),
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 10,
+                KNorm.Let(("Ti3", Type.IntType), KNorm.Int 32,
+                KNorm.Let(("Tt4", Type.TupleType [Type.IntType; Type.IntType]), KNorm.Tuple ["Ti2"; "Ti3"],
+                KNorm.LetTuple(["g", Type.IntType; "h", Type.IntType], "Tt4",
+                KNorm.Let(("f", Type.IntType), KNorm.Add("g", "h"),
+                KNorm.Var "f"))))))))
+    }
+    {
+        s_expr = @"
+            (let a = 3 in
+            (let b = 5 in
+            (if (= a b)
+                then (let c = (let d = (let e = 1 in (+ e 1)) in (+ d d)) in (- c))
+                else (let f = (let (, g h) = (, 10 32) in (+ g h)) in f))))
+        "
+        expected_k_form =
+            KNorm.Let(("a", Type.IntType), KNorm.Int 3,
+            KNorm.Let(("b", Type.IntType), KNorm.Int 5,
+            KNorm.BranchEq("a", "b",
+                KNorm.Let(("e", Type.IntType), KNorm.Int 1,
+                KNorm.Let(("Ti1", Type.IntType), KNorm.Int 1,
+                KNorm.Let(("d", Type.IntType), KNorm.Add("e", "Ti1"),
+                KNorm.Let(("c", Type.IntType), KNorm.Add("d", "d"),
+                KNorm.Neg "c")))),
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 10,
+                KNorm.Let(("Ti3", Type.IntType), KNorm.Int 32,
+                KNorm.Let(("Tt4", Type.TupleType [Type.IntType; Type.IntType]), KNorm.Tuple ["Ti2"; "Ti3"],
+                KNorm.LetTuple(["g", Type.IntType; "h", Type.IntType], "Tt4",
+                KNorm.Let(("f", Type.IntType), KNorm.Add("g", "h"),
+                KNorm.Var "f"))))))))
+    }
 ]
 
 [<Test>]
