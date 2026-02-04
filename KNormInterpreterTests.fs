@@ -99,6 +99,20 @@ let private k_norm_tests: test_case list = [
     }
     {
         s_expr = @"
+            (let-rec (fib x) =
+              (let-rec (fib-tail x-2 x-1 x) =
+                (if (<= x 1)
+                  then x-1
+                  else
+                    (let (, x-2' x-1' x') = (, x-1 (+ x-2 x-1) (- x 1)) in
+                    (fib-tail x-2' x-1' x'))) in
+                (fib-tail 1 1 x)) in
+              (fib 6))
+        "
+        expected_res = KNormInterpreter.Int 13
+    }
+    {
+        s_expr = @"
             (let-rec (fact x) =
                 (if (<= x 1.0)
                     then 1.0
