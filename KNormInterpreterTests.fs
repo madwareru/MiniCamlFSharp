@@ -7,6 +7,12 @@ open mini_caml_fsharp.Id
 open mini_caml_fsharp.Parsing
 open mini_caml_fsharp.Typing
 open mini_caml_fsharp.KNormalisation
+open mini_caml_fsharp.AlphaConv
+open mini_caml_fsharp.BetaReduction
+open mini_caml_fsharp.Assoc
+open mini_caml_fsharp.Inlining
+open mini_caml_fsharp.ConstFolding
+open mini_caml_fsharp.Elimination
 open mini_caml_fsharp.KNormInterpreter
 
 type private test_case = { s_expr: string; expected_res: KNormInterpreter.value_t }
@@ -99,15 +105,15 @@ let private k_norm_tests: test_case list = [
     }
     {
         s_expr = @"
-            (let-rec (fib x) =
-              (let-rec (fib-tail x-2 x-1 x) =
+            (let-rec (fib x) : (i) -> i =
+              (let-rec (fib-tail x-2 x-1 x) : (i i i) -> i =
                 (if (<= x 1)
                   then x-1
                   else
-                    (let (, x-2' x-1' x') = (, x-1 (+ x-2 x-1) (- x 1)) in
-                    (fib-tail x-2' x-1' x'))) in
-                (fib-tail 1 1 x)) in
-              (fib 6))
+                    (let (, x-2 x-1 x) = (, x-1 (+ x-2 x-1) (- x 1))
+                    in (fib-tail x-2 x-1 x)))
+                in (fib-tail 1 1 x))
+              in (fib 6))
         "
         expected_res = KNormInterpreter.Int 13
     }
@@ -178,4 +184,33 @@ let testKNormInterpretation () =
             |> Typing.f
             |> KNormalisation.f
         let res = k_form |> KNormInterpreter.f
+        Assert.AreEqual(case.expected_res, res)
+        
+[<Test>]
+let testKNormOptimizedInterpretation () =
+    let limit = 100
+    let rec iter n e =
+        printfn $"iteration %d{n}."
+        match n with
+        | 0 -> e
+        | _ ->
+            let e' = e |> BetaReduction.f
+            let e' = e' |> Assoc.f
+            let e' = e' |> Inlining.f 45
+            let e' = e' |> ConstFolding.f
+            let e' = e' |> Elimination.f
+            if e = e' then e' else iter (n - 1) e'
+    
+    for case in k_norm_tests do
+        Id.reset ()
+        let k_form =
+            case.s_expr
+            |> SExpr.parse
+            |> Parsing.f
+            |> Typing.f
+            |> KNormalisation.f
+            |> AlphaConv.f
+        
+        let converted = (limit, k_form) ||> iter
+        let res = converted |> KNormInterpreter.f
         Assert.AreEqual(case.expected_res, res)
