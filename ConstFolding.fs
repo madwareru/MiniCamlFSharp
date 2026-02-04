@@ -94,7 +94,7 @@ module ConstFolding =
                 e'
             | _ -> KNorm.LetTuple(ids, v, cont |> const_fold env)
 
-        // В оъявлении функции просто пробрасываем вызов в body и cont
+        // В объявлении функции просто пробрасываем вызов в body и cont
         | KNorm.LetRec({ name = name
                          args = args
                          body = body },
