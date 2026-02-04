@@ -1,10 +1,10 @@
-module mini_caml_fsharp.Elim
+module mini_caml_fsharp.Elimination
 
 open mini_caml_fsharp.KNorm
 open mini_caml_fsharp.S
 open mini_caml_fsharp.Id
 
-module Elim =
+module Elimination =
     /// Функция, определяющая, является ли выражение свободным
     /// от побочных эффектов. Это нужно знать для дальнейшего
     /// решения, нужно ли уничтожать неиспользуемое объявление,
@@ -28,7 +28,7 @@ module Elim =
         | KNorm.LetRec(_, e)
         | KNorm.LetTuple(_, _, e) -> is_pure e
         
-        | _ -> false
+        | _ -> true
         
     let rec f =
         function

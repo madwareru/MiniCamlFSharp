@@ -18,7 +18,7 @@ open mini_caml_fsharp.KNormInterpreter
 
 type private test_case = { s_expr: string; expected_k_form: KNorm.t }
 
-let private assoc_tests: test_case list = [
+let private tests: test_case list = [
     {
         s_expr = "(let x = 7 in x)"
         expected_k_form =
@@ -135,7 +135,7 @@ let private assoc_tests: test_case list = [
 
 [<Test>]
 let testConstFold () =
-    for case in assoc_tests do
+    for case in tests do
         Id.reset ()
         let k_form =
             case.s_expr

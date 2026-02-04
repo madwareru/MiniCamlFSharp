@@ -38,7 +38,9 @@
     <Compile Include="InliningTests.fs" />
     <Compile Include="ConstFolding.fs" />
     <Compile Include="ConstFoldingTests.fs" />
-    <Compile Include="Elim.fs" />
+    <Compile Include="Elimination.fs" />
+    <Compile Include="EliminationTests.fs" />
+    <Compile Include="KOptimizationTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
