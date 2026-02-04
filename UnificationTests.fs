@@ -37,6 +37,28 @@ let private tests = [
             Type.FunType([Type.VarType(ref <| Some Type.UnitType)], Type.IntType)
         )
     }
+    
+    // Пустой тип и тип функции
+    {
+        before_unification = (
+            Type.VarType(ref None),
+            Type.FunType([Type.IntType], Type.IntType)
+        )
+        expected_after = (
+            Type.VarType(ref(Some <| Type.FunType([Type.IntType], Type.IntType))),
+            Type.FunType([Type.IntType], Type.IntType)
+        )
+    }
+    {
+        before_unification = (
+            Type.FunType([Type.IntType], Type.IntType),
+            Type.VarType(ref None)
+        )
+        expected_after = (
+            Type.FunType([Type.IntType], Type.IntType),
+            Type.VarType(ref(Some <| Type.FunType([Type.IntType], Type.IntType)))
+        )
+    }
 ]
 
 [<Test>]

@@ -46,6 +46,20 @@ let private assoc_tests: test_case list = [
             KNorm.Let(("x", Type.IntType), KNorm.Add("y", "z"),
             KNorm.Var "x")))))
     }
+    {
+        s_expr = "(let add' = (let-rec (add x y) = (+ x y) in add) in (add' 5 8))"
+        expected_k_form = KNorm.LetRec(
+            {
+                name = ("add", Type.FunType([Type.IntType; Type.IntType], Type.IntType))
+                args = ["x", Type.IntType; "y", Type.IntType]
+                body = KNorm.Add("x", "y")
+            },
+            KNorm.Let(("add'", Type.FunType([Type.IntType; Type.IntType], Type.IntType)), KNorm.Var("add"),
+            KNorm.Let(("Ti1", Type.IntType), KNorm.Int 5,
+            KNorm.Let(("Ti2", Type.IntType), KNorm.Int 8,
+            KNorm.Apply("add'", ["Ti1"; "Ti2"]))))
+        )
+    }
 ]
 
 [<Test>]

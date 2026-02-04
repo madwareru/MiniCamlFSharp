@@ -1,7 +1,6 @@
 module mini_caml_fsharp.SExpr
 
 open Microsoft.FSharp.Core
-open NUnit.Framework
 open mini_caml_fsharp.ParserCombinators
 
 module SExpr =

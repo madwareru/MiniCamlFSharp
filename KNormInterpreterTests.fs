@@ -128,6 +128,14 @@ let private k_norm_tests: test_case list = [
     }
     {
         s_expr = @"
+            (let-rec (foo t) : ( (, i i i) ) -> i =
+                (let (, x y z) = t in (+ x y z)) in
+                (foo (, 3 4 5)))
+        "
+        expected_res = KNormInterpreter.Int 12
+    }
+    {
+        s_expr = @"
             (let-rec (fact x) =
                 (if (<= x 1.0)
                     then 1.0

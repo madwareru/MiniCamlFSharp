@@ -120,6 +120,34 @@ let private tests: test_case list = [
             KNorm.Int 13))
     }
     {
+        s_expr = "(let x = 5.0 in (let y = 10.0 in (if (<= x y) then 42 else 13)))"
+        expected_k_form =
+            KNorm.Let (("x.1", Type.FloatType), KNorm.Float 5.0,
+            KNorm.Let (("y.2", Type.FloatType), KNorm.Float 10.0,
+            KNorm.Int 42))
+    }
+    {
+        s_expr = "(let x = 5.0 in (let y = 10.0 in (if (<= y x) then 42 else 13)))"
+        expected_k_form =
+            KNorm.Let (("x.1", Type.FloatType), KNorm.Float 5,
+            KNorm.Let (("y.2", Type.FloatType), KNorm.Float 10,
+            KNorm.Int 13))
+    }
+    {
+        s_expr = "(let x = 5.0 in (let y = 10.0 in (if (<> x y) then 42 else 13)))"
+        expected_k_form =
+            KNorm.Let (("x.1", Type.FloatType), KNorm.Float 5.0,
+            KNorm.Let (("y.2", Type.FloatType), KNorm.Float 10.0,
+            KNorm.Int 42))
+    }
+    {
+        s_expr = "(let x = 5.0 in (let y = 10.0 in (if (= x y) then 42 else 13)))"
+        expected_k_form =
+            KNorm.Let (("x.1", Type.FloatType), KNorm.Float 5.0,
+            KNorm.Let (("y.2", Type.FloatType), KNorm.Float 10.0,
+            KNorm.Int 13))
+    }
+    {
         s_expr = "(let (, x y) = (, 5 5) in (if (= x y) then 42 else 13))"
         expected_k_form =
             KNorm.Let(("Ti1.5", Type.IntType), KNorm.Int 5L,

@@ -21,6 +21,16 @@ type private test_case = { s_expr: string; expected_k_form: KNorm.t }
 
 let private tests: test_case list = [
     {
+        s_expr = "(let (, x y z) = (, 1 2 3) in 7)"
+        expected_k_form = KNorm.Int 7
+    }
+    {
+        s_expr = @"
+            (let-rec (foo t) : ( (, _ _ _) ) -> _ = (let (, x y z) = t in 7) in (foo (, 1 2 3)))
+        "
+        expected_k_form = KNorm.Int 7
+    }
+    {
         s_expr = "(let x = 7 in x)"
         expected_k_form = KNorm.Int 7
     }

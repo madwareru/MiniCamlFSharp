@@ -9,7 +9,8 @@ open Syntax
 
 module Typing =
     exception UnifyException of Type.t * Type.t
-    exception TypingException of t * Type.t * Type.t
+    type TypingErrorInfo = { expr: t; lhs: Type.t; rhs: Type.t }
+    exception TypingException of TypingErrorInfo
 
     // "Внешние" переменные
     let extenv: (Type.t M) ref = ref (M.Empty())
@@ -85,7 +86,7 @@ module Typing =
         | Type.FunType(arg_ts, ret_t) -> arg_ts |> List.exists (occur r1) || occur r1 ret_t
         | Type.TupleType(ts) -> List.exists (occur r1) ts
         | Type.ArrayType(elem_t) -> occur r1 elem_t
-        | Type.VarType(r2) when r1.Equals(r2) -> true
+        | Type.VarType _ when r1 = r2 -> true
         | Type.VarType({ contents = None }) -> false
         | Type.VarType({ contents = Some(t2) }) -> occur r1 t2
         | _ -> false
@@ -148,12 +149,12 @@ module Typing =
         // подстановкой является такая, где в типовую переменную записывается
         // тип другого операнда
         | Type.VarType({ contents = None } as r1), _ ->
-            if occur r1 t2 then
+            if occur t1 t2 then
                 raise (UnifyException(t1, t2))
             else
                 r1.Value <- Some(t2)
         | _, Type.VarType({ contents = None } as r2) ->
-            if occur r2 t1 then
+            if occur t2 t1 then
                 raise (UnifyException(t1, t2))
             else
                 r2.Value <- Some(t1)
@@ -337,7 +338,7 @@ module Typing =
                         extenv.Value <- extenv.Value.Add name t
                         t
         with UnifyException(t1, t2) ->
-            raise (TypingException(deref_term e, deref_typ t1, deref_typ t2))
+            raise (TypingException { expr = e; lhs = t1; rhs = t2 })
 
     let f e =
         extenv.Value <- M.Empty()
