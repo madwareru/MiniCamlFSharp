@@ -38,6 +38,7 @@
     <Compile Include="InliningTests.fs" />
     <Compile Include="ConstFolding.fs" />
     <Compile Include="ConstFoldingTests.fs" />
+    <Compile Include="Elim.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
