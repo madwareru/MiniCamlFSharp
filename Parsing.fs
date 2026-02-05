@@ -35,7 +35,10 @@ module Parsing =
         | _ -> failwith "failed to parse a type annotation"
 
     let private mk_reducer ctor f acc next = ctor (acc, f next)
-
+    
+    let or_else_ctor (lhs, rhs) = Syntax.IfNode(lhs, Syntax.BoolNode true, rhs)
+    let and_then_ctor (lhs, rhs) = Syntax.IfNode(Syntax.NotNode(lhs), Syntax.BoolNode false, rhs)
+    
     let private fail_form text xs =
         failwith
         <| Printf.sprintf $"'%s{text}' form with arity %d{xs |> List.length} is not supported"
@@ -80,6 +83,14 @@ module Parsing =
             match exs with
             | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer Syntax.FDivNode f) (f x)
             | _ -> fail_form "/." exs
+        | SExpr.SExprList(SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer or_else_ctor f) (f x)
+            | _ -> fail_form "or-else" exs
+        | SExpr.SExprList(SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ] :: exs) ->
+            match exs with
+            | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer and_then_ctor f) (f x)
+            | _ -> fail_form "and-then" exs
         | SExpr.SExprList(SExpr.SExprId [ '=' ] :: exs) ->
             match exs with
             | [ lhs; rhs ] -> Syntax.EqNode(f lhs, f rhs)
@@ -127,14 +138,6 @@ module Parsing =
                             SExpr.SExprId [ 'e'; 'l'; 's'; 'e' ]
                             else_e ] -> Syntax.IfNode(f cond, f then_e, f else_e)
         | SExpr.SExprList(SExpr.SExprId [ 'i'; 'f' ] :: _) -> failwith "incorrect 'if' form found"
-        | SExpr.SExprList(SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ] :: exs) ->
-            match exs with
-            | [ lhs; rhs ] -> Syntax.IfNode(f lhs, Syntax.BoolNode true, f rhs)
-            | _ -> fail_form "or-else" exs
-        | SExpr.SExprList(SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ] :: exs) ->
-            match exs with
-            | [ lhs; rhs ] -> Syntax.IfNode(Syntax.NotNode(f lhs), Syntax.BoolNode false, f rhs)
-            | _ -> fail_form "and-then" exs
         | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't' ] :: exs) ->
             match exs with
             | [ SExpr.SExprId binding; SExpr.SExprId [ '=' ]; e; SExpr.SExprId [ 'i'; 'n' ]; cont ] ->

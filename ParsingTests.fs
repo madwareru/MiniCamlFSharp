@@ -246,8 +246,41 @@ let private parsing_tests: test_case list = [
         )
     }
     {
-        s_expr = "(let _ = 5 in 6)"
-        expected_syntax = Syntax.LetNode(("_", Type.gen_empty ()), Syntax.IntNode 5, Syntax.IntNode 6)
+        // можно явно проаннотировать тип
+        s_expr = "(let x : i = 2 in (+ x 2))"
+        expected_syntax = Syntax.LetNode(
+            ("x", Type.IntType),
+            Syntax.IntNode 2,
+            Syntax.AddNode(Syntax.VarNode "x", Syntax.IntNode 2)
+        )
+    }
+    {
+        // можно явно проаннотировать тип
+        s_expr = "(let x : f = 2.0 in (+. x 2.0))"
+        expected_syntax = Syntax.LetNode(
+            ("x", Type.FloatType),
+            Syntax.FloatNode 2.0,
+            Syntax.FAddNode(Syntax.VarNode "x", Syntax.FloatNode 2.0)
+        )
+    }
+    {
+        // можно явно проаннотировать тип
+        s_expr = "(let x : b = #t in x)"
+        expected_syntax = Syntax.LetNode(
+            ("x", Type.BoolType),
+            Syntax.BoolNode true,
+            Syntax.VarNode "x"
+        )
+    }
+    {
+        // Можно деструктурировать кортеж, при так же поддерживается
+        // аннотирование типами 
+        s_expr = "(let (, x y) : (, b i) = (, #t 123) in x)"
+        expected_syntax = Syntax.LetTuple(
+            ["x", Type.BoolType; "y", Type.IntType],
+            Syntax.TupleNode [Syntax.BoolNode true; Syntax.IntNode 123],
+            Syntax.VarNode "x"
+        )
     }
     {
         s_expr = "(let-rec (fac x) = (if (<= x 1.0) then 1.0 else (*. x (fac (-. x 1.0)))) in (fac 6.0))"
@@ -270,6 +303,7 @@ let private parsing_tests: test_case list = [
         )
     }
     {
+        // объявления функций тоже можно аннотировать
         s_expr = "(let-rec (hello-world _) : (u) -> u = (println-hello-world ()) in ())"
         expected_syntax = Syntax.LetRecNode(
             {
@@ -280,10 +314,29 @@ let private parsing_tests: test_case list = [
         )
     }
     {
-        // Описанный в предыдущем разделе оператор для выстраивания в последовательность
-        // цепочки из "забываний" вычислений, для написания кода в императивном стиле,
-        // данный код требует, чтобы каждый стейтмент был типа Unit, иначе он не пройдёт
-        // этап типизации
+        // функция является первоклассным значением и её можно положить
+        // в другую переменную, которую можно проаннотировать типом функции
+        s_expr = @"
+            (let x : (fn (u) -> u) =
+                (let-rec (hello-world _) : (u) -> u = (println-hello-world ()) in ()) in
+                (x ()))
+        "
+        expected_syntax = Syntax.LetNode(
+            ("x", Type.FunType([Type.UnitType], Type.UnitType)),
+            Syntax.LetRecNode(
+                {
+                    name = "hello-world", Type.FunType([Type.UnitType], Type.UnitType)
+                    args = [ ("_", Type.UnitType) ]
+                    body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ])
+                }, Syntax.UnitNode
+            ),
+            Syntax.ApplyNode(Syntax.VarNode "x", [ Syntax.UnitNode ])
+        )
+    }
+    {
+        // Оператор для выстраивания в последовательность цепочки из "забываний" вычислений,
+        // для написания кода в императивном стиле, данный оператор требует, чтобы каждое выражение
+        // было типа Unit
         s_expr = @"
             (let arr : ([] i) = (new[] 0 2) in
                 (;

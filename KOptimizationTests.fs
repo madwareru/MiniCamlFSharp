@@ -61,6 +61,19 @@ let private tests: test_case list = [
         s_expr = "(let (, x y) = (, 5 5) in (if (<> x y) then 42 else 13))"
         expected_k_form = KNorm.Int 13
     }
+    {
+        s_expr = @"
+            (let-rec (add3 x y z) = (+ x y z) in (add3 1 2 3))
+        "
+        expected_k_form = KNorm.Int 6
+    }
+    {
+        s_expr = @"
+            (let-rec (add3 x y z) = (+ x y z) in
+            (add3 (add3 1 2 3) (add3 1 2 3) (add3 1 2 3)))
+        "
+        expected_k_form = KNorm.Int 18
+    }
 ]
 
 [<Test>]
