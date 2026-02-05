@@ -42,6 +42,7 @@
     <Compile Include="EliminationTests.fs" />
     <Compile Include="KNormInterpreterTests.fs" />
     <Compile Include="KOptimizationTests.fs" />
+    <Compile Include="ClosureRepresentation.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
