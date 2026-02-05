@@ -9,6 +9,8 @@ type S =
     static member OfSet(set: Set<Id.t>) = { set = set }
     static member Singleton x = Set.singleton x |> S.OfSet
     static member OfList l = Set.ofList l |> S.OfSet
+    
+    member this.Elements () = this.set |> Set.toList
     member this.Contains k = this.set |> Set.contains k
     member this.Add x = this.set |> Set.add x |> S.OfSet
     member this.Union s = this.set |> Set.union s.set |> S.OfSet

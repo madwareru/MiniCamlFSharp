@@ -60,7 +60,7 @@ module ClosureRepresentation =
         // Операции над массивами
         | Get of Id.t * Id.t
         | Put of Id.t * Id.t * Id.t
-        | ExtArray of Id.t
+        | ExtArray of Id.l
 
         // Прямой вызов функции по метке из toplevel
         | ApplyDirect of Id.l * Id.t list
