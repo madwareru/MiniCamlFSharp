@@ -274,7 +274,7 @@ let private parsing_tests: test_case list = [
     }
     {
         // Можно деструктурировать кортеж, при так же поддерживается
-        // аннотирование типами 
+        // аннотирование типами
         s_expr = "(let (, x y) : (, b i) = (, #t 123) in x)"
         expected_syntax = Syntax.LetTuple(
             ["x", Type.BoolType; "y", Type.IntType],

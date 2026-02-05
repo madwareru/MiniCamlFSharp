@@ -247,17 +247,26 @@ module KNormInterpreter =
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Float _ as v) ->
                     let arr = Array.create (int count) v
-                    value_t.Array { element_type = Type.FloatType; value = arr }
+
+                    value_t.Array
+                        { element_type = Type.FloatType
+                          value = arr }
                 | _ -> failwith "create_float_array: count should be of type int and value should be of type float"
             | "create_array", [ count; v ] ->
                 match lookup_var count, lookup_var v with
                 | value_t.Int count, (value_t.Int _ as v) ->
                     let arr = Array.create (int count) v
-                    value_t.Array { element_type = Type.IntType; value = arr }
+
+                    value_t.Array
+                        { element_type = Type.IntType
+                          value = arr }
                 | value_t.Int count, v ->
                     let element_type = element_type v
                     let arr = Array.create (int count) v
-                    value_t.Array{ element_type = element_type; value = arr }
+
+                    value_t.Array
+                        { element_type = element_type
+                          value = arr }
                 | _ -> failwith "create_array: count should be of type int"
             | _ -> failwith "unknown external function"
 

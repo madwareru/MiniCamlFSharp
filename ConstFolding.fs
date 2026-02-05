@@ -87,10 +87,10 @@ module ConstFolding =
             match v |> as_tuple with
             | Some bound_names ->
                 let mutable e' = cont |> const_fold env
-            
+
                 for id, v in (ids, bound_names) ||> List.zip do
                     e' <- KNorm.Let(id, KNorm.Var v, e')
-            
+
                 e'
             | _ -> KNorm.LetTuple(ids, v, cont |> const_fold env)
 

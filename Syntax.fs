@@ -12,7 +12,7 @@ module Syntax =
         /// $int-literal
         | IntNode of int64
         /// $double-literal
-        | FloatNode of double 
+        | FloatNode of double
         /// (not $expr), где $expr: boolean
         | NotNode of t
         /// (- $expr), где $expr: int
@@ -54,7 +54,8 @@ module Syntax =
         /// ([get] $expr0 $expr1)
         | GetNode of t * t
         /// ([put] $expr0 $expr1 $expr2)
-        | PutNode of t * t * t 
+        | PutNode of t * t * t
+
     and fun_def =
         { name: Id.t * Type.t
           args: (Id.t * Type.t) list

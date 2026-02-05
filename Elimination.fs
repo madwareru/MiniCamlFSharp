@@ -20,16 +20,16 @@ module Elimination =
         | KNorm.Apply _
         | KNorm.ExtFunApply _
         | KNorm.Put _ -> false
-        
+
         | KNorm.Let(_, a, b)
         | KNorm.BranchEq(_, _, a, b)
         | KNorm.BranchLE(_, _, a, b) -> is_pure a && is_pure b
-        
+
         | KNorm.LetRec(_, e)
         | KNorm.LetTuple(_, _, e) -> is_pure e
-        
+
         | _ -> true
-        
+
     let rec f =
         function
         | KNorm.BranchEq(x, y, then_e, else_e) -> KNorm.BranchEq(x, y, f then_e, f else_e)
@@ -38,7 +38,8 @@ module Elimination =
             let binding' = binding |> f
             let cont' = cont |> f
             let live_set = cont' |> KNorm.used_vars
-            if (is_pure binding') && not(live_set.Contains(name)) then
+
+            if (is_pure binding') && not (live_set.Contains(name)) then
                 printfn $"eliminating variable %s{name}"
                 cont'
             else
@@ -48,18 +49,28 @@ module Elimination =
             let name_set = S.OfList names
             let cont' = cont |> f
             let live_set = cont' |> KNorm.used_vars
-            if live_set.Intersect(name_set).IsEmpty () then
+
+            if live_set.Intersect(name_set).IsEmpty() then
                 printfn $"eliminating variables %s{Id.pp_list names}"
                 cont'
             else
                 KNorm.LetTuple(xts, v, cont')
-        | KNorm.LetRec({ name = (name, t); args = args; body = body }, cont) ->
+        | KNorm.LetRec({ name = (name, t)
+                         args = args
+                         body = body },
+                       cont) ->
             let body' = body |> f
             let cont' = cont |> f
             let live_set = cont' |> KNorm.used_vars
-            if (is_pure body') && not(live_set.Contains(name)) then
+
+            if (is_pure body') && not (live_set.Contains(name)) then
                 printfn $"eliminating variable %s{name}"
                 cont'
             else
-                KNorm.LetRec({ name = (name, t); args = args; body = body' }, cont')
+                KNorm.LetRec(
+                    { name = (name, t)
+                      args = args
+                      body = body' },
+                    cont'
+                )
         | e -> e

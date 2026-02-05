@@ -6,7 +6,7 @@ open mini_caml_fsharp.AlphaConv
 
 module Inlining =
     /// Функция, вычисляющая "размер" выражения в глубину
-    /// для дальнейшего решения, делать встраивание или нет. 
+    /// для дальнейшего решения, делать встраивание или нет.
     let rec private size =
         function
         | KNorm.Let(_, e1, e2)
@@ -35,14 +35,17 @@ module Inlining =
         | KNorm.BranchLE(x, y, e1, e2) -> KNorm.BranchLE(x, y, g env e1, g env e2)
         | KNorm.Let(xt, e1, e2) -> KNorm.Let(xt, g env e1, g env e2)
         | KNorm.LetTuple(xts, y, e) -> KNorm.LetTuple(xts, y, g env e)
-        | KNorm.LetRec({ name = x, t; args = args; body = body }, cont) ->
+        | KNorm.LetRec({ name = x, t
+                         args = args
+                         body = body },
+                       cont) ->
             let env' =
                 match size body with
                 | size when size <= threshold ->
                     // В случае если размер тела функции не превышеает
                     // порог, окружение подменяется копией себя с добавлением
                     // маппинга имени x на пару из имён аргументов (без типов,
-                    // они нам не понадобятся далее) и тела функции 
+                    // они нам не понадобятся далее) и тела функции
                     let args_without_types = args |> List.map fst
                     env.Add x (args_without_types, body)
                 | _ -> env
@@ -52,13 +55,18 @@ module Inlining =
             // таким образом будет получен "частичный" инлайнинг одной
             // итерации такой функции
             let body' = body |> g env'
-            
+
             // Рекурсивно вызываем инлайнинг для продолжение
-            let cont' = cont |> g env' 
-            
+            let cont' = cont |> g env'
+
             // Результатом работы является объявление рекурсивной функции
             // с потенциально встроенным телом и продолжением
-            KNorm.LetRec({ name = x, t; args = args; body = body' }, cont')
+            KNorm.LetRec(
+                { name = x, t
+                  args = args
+                  body = body' },
+                cont'
+            )
         | KNorm.Apply(x, arg_vars) ->
             match env.TryFind x with
             | Some(arg_names, body) ->
@@ -69,9 +77,10 @@ module Inlining =
                 // а все остальные имена пройдут альфа-конверсию, чтобы
                 // не возникло конфликта с вызывающей функцией
                 let mutable alpha_env = M.Empty()
+
                 for n, v in (arg_names, arg_vars) ||> List.zip do
                     alpha_env <- alpha_env.Add n v
-                
+
                 // Возвращаем альфа-конвертированное тело функции
                 body |> AlphaConv.alpha_convert alpha_env
             | _ -> e

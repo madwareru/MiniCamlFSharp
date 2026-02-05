@@ -35,7 +35,7 @@ module Parsing =
         | _ -> failwith "failed to parse a type annotation"
 
     let private mk_reducer ctor f acc next = ctor (acc, f next)
-    
+
     let private fail_form text xs =
         failwith
         <| Printf.sprintf $"'%s{text}' form with arity %d{xs |> List.length} is not supported"
@@ -44,10 +44,12 @@ module Parsing =
         match exs with
         | x :: xs when not xs.IsEmpty -> xs |> List.fold (mk_reducer ctor p_expr) (p_expr x)
         | _ -> fail_form form exs
+
     and private p_bin form ctor exs =
         match exs with
-        | [ lhs; rhs ] -> ctor(p_expr lhs, p_expr rhs)
+        | [ lhs; rhs ] -> ctor (p_expr lhs, p_expr rhs)
         | _ -> fail_form form exs
+
     and private p_expr s_expr =
         match s_expr with
         | SExpr.SExprId id -> Syntax.VarNode(make_id id)
@@ -77,9 +79,11 @@ module Parsing =
         | SExpr.SExprList(SExpr.SExprId [ '*'; '.' ] :: exs) -> exs |> p_vararg "*." Syntax.FMulNode
         | SExpr.SExprList(SExpr.SExprId [ '/'; '.' ] :: exs) -> exs |> p_vararg "/." Syntax.FDivNode
         | SExpr.SExprList(SExpr.SExprId [ 'o'; 'r'; '-'; 'e'; 'l'; 's'; 'e' ] :: exs) ->
-            exs |> p_vararg "or-else" (fun (l, r) -> Syntax.IfNode(l, Syntax.BoolNode true, r))
+            exs
+            |> p_vararg "or-else" (fun (l, r) -> Syntax.IfNode(l, Syntax.BoolNode true, r))
         | SExpr.SExprList(SExpr.SExprId [ 'a'; 'n'; 'd'; '-'; 't'; 'h'; 'e'; 'n' ] :: exs) ->
-            exs |> p_vararg "and-then" (fun (l, r) -> Syntax.IfNode(Syntax.NotNode(l), Syntax.BoolNode false, r))
+            exs
+            |> p_vararg "and-then" (fun (l, r) -> Syntax.IfNode(Syntax.NotNode(l), Syntax.BoolNode false, r))
         | SExpr.SExprList(SExpr.SExprId [ '=' ] :: exs) -> exs |> p_bin "=" Syntax.EqNode
         | SExpr.SExprList(SExpr.SExprId [ '<'; '>' ] :: exs) ->
             exs |> p_bin "<>" (fun (lhs, rhs) -> Syntax.NotNode(Syntax.EqNode(lhs, rhs)))
@@ -90,10 +94,8 @@ module Parsing =
         | SExpr.SExprList(SExpr.SExprId [ '<'; '=' ] :: exs) -> exs |> p_bin "<=" Syntax.LENode
         | SExpr.SExprList(SExpr.SExprId [ '>'; '=' ] :: exs) ->
             exs |> p_bin ">=" (fun (lhs, rhs) -> Syntax.LENode(rhs, lhs))
-        | SExpr.SExprList(SExpr.SExprId [ 'n'; 'e'; 'w'; '['; ']' ] :: exs) ->
-            exs |> p_bin "new[]" Syntax.ArrayNode
-        | SExpr.SExprList(SExpr.SExprId [ 'g'; 'e'; 't'; '['; ']' ] :: exs) ->
-            exs |> p_bin "get[]" Syntax.GetNode
+        | SExpr.SExprList(SExpr.SExprId [ 'n'; 'e'; 'w'; '['; ']' ] :: exs) -> exs |> p_bin "new[]" Syntax.ArrayNode
+        | SExpr.SExprList(SExpr.SExprId [ 'g'; 'e'; 't'; '['; ']' ] :: exs) -> exs |> p_bin "get[]" Syntax.GetNode
         | SExpr.SExprList(SExpr.SExprId [ 's'; 'e'; 't'; '['; ']' ] :: exs) ->
             match exs with
             | [ a; i; SExpr.SExprId [ '<'; '-' ]; e ] -> Syntax.PutNode(p_expr a, p_expr i, p_expr e)
@@ -197,7 +199,7 @@ module Parsing =
                         p_expr cont
                     )
             | _ -> failwith "incorrect 'let-rec' form found"
-        | SExpr.SExprList(SExpr.SExprId ( ';' :: _ ) :: es) ->
+        | SExpr.SExprList(SExpr.SExprId(';' :: _) :: es) ->
             let rec unwind =
                 function
                 | [ e ] -> p_expr e
