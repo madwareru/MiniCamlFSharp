@@ -116,10 +116,7 @@ module ClosureRepresentation =
         | t.BranchEq(x, y, e1, e2)
         | t.BranchLE(x, y, e1, e2) -> (free_vars e1).Union(free_vars e2).Add(x).Add y
 
-        | t.MakeClosure((x, _), { actual_free_vars = ys }, cont) ->
-            // Получаем используемые в body переменные, но исключаем
-            // из них имена аргументов функции и имя функции.
-            (S.OfList ys).Union(free_vars cont).Remove x
+        | t.MakeClosure((x, _), { actual_free_vars = ys }, cont) -> (S.OfList ys).Union(free_vars cont).Remove x
 
         | t.Let((x, _), body, cont) ->
             // получаем имена из тела и из продолжения (убирая из
