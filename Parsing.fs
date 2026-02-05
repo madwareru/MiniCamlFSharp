@@ -197,7 +197,7 @@ module Parsing =
                         p_expr cont
                     )
             | _ -> failwith "incorrect 'let-rec' form found"
-        | SExpr.SExprList(SExpr.SExprId [ ';' ] :: es) ->
+        | SExpr.SExprList(SExpr.SExprId ( ';' :: _ ) :: es) ->
             let rec unwind =
                 function
                 | [ e ] -> p_expr e

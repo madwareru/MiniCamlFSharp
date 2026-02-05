@@ -58,7 +58,8 @@ module KNormInterpreter =
             else
                 let failed = (l_vs, r_vs) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
                 not failed
-        | value_t.Func f_l, value_t.Func f_r -> f_l = f_r
+        // функции сравниваются только на равенство и только ссылочно
+        | value_t.Func f_l, value_t.Func f_r when cmp = EQ -> System.Object.ReferenceEquals(f_l, f_r)
         | _ -> failwith "can't compare incompatible types"
 
     let rec private interpret (env: value_t M) (e: KNorm.t) =

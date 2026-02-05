@@ -179,6 +179,26 @@ let private k_norm_tests: test_case list = [
         "
         expected_res = KNormInterpreter.Int 20
     }
+    {
+        // Императивный факториал
+        s_expr = @"
+            (let acc : ([] f) = (new[] 1.0 1) in
+            (let-rec (fact-step x) =
+                (if (;тут-был-вася (<= x 1.0))
+                    then ()
+                    else
+                        (;Внимание!!!!-мутабельность!!!!-аыаыаыа 
+                            (let v = (get[] acc 0) in
+                            (let v' = (*. x v) in
+                            (;
+                                (set[] acc 0 <- v')
+                                (fact-step (-. x 1.0))))))) in
+            (;
+                (fact-step 6.0)
+                (get[] acc 0))))
+        "
+        expected_res = KNormInterpreter.Float 720.0
+    }
 ]
 
 [<Test>]

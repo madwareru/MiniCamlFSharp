@@ -339,7 +339,7 @@ let private parsing_tests: test_case list = [
         // было типа Unit
         s_expr = @"
             (let arr : ([] i) = (new[] 0 2) in
-                (;
+                (;этот-оператор-так-же-можно-использовать-для-комментариев
                 (set[] arr 0 <- 10)
                 (set[] arr 1 <- 20)
                 (+
