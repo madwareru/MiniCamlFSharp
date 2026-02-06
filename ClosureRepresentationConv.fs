@@ -63,32 +63,32 @@ module ClosureRepresentationConv =
                          KNorm.args = argts
                          KNorm.body = body
                        }, cont) ->
+            // 1. Cначала нужно получить свободные переменные из тела функции
+            //    (это все связанные имена кроме имени функции и имён аргументов),
+            //    а так же получить из окружения их типы для того, чтобы положить
+            //    в closure в случае если мы имеем дело с замыканием
             let args = argts |> List.map fst
-            let env' = env.Add name t
-            let known' = known.Add name
-            let body', toplevel' = body |> convert env' known' toplevel
-            let body_free_vars = (body' |> ClosureRepresentation.free_vars).Exclude(S.OfList args)
-            let known', body', toplevel' =
-                match body_free_vars.IsEmpty () with
-                | true -> known', body', toplevel'
-                | false ->
-                    // В случае если свободные переменные в теле были найдены как непустые,
-                    // откатываемся к вычислению тела с known не содержащим имени функции
-                    // и с env содержащим аргументы
-                    let env'' = env'.AddList argts
-                    let body', toplevel' = body |> convert env'' known toplevel
-                    known, body', toplevel'
-            let body_free_vars =
-                (body' |> ClosureRepresentation.free_vars)
-                    .Exclude((S.OfList args).Add name)
-                    .Elements ()
-                    
+            let body_used_vars = KNorm.used_vars body
+            let body_free_vars = body_used_vars.Exclude((S.OfList args).Add name).Elements ()
             let mutable body_free_vars_with_types = []
             for free_var in body_free_vars do
-                match env'.TryFind free_var with
+                match env.TryFind free_var with
                 | Some t -> body_free_vars_with_types <- (free_var, t) :: body_free_vars_with_types
                 | _ -> failwith $"failed to find {free_var} in environment!"
             
+            // 2. В случае если список свободных переменных непуст, мы имеем дело с
+            //    замыканием. В этом случае для рекурсивного вызова body и cont нужно
+            //    передавать неизменённый набор known, в противном случае в него нужно
+            //    добавить имя нашей функции (это нужно для того, чтобы впоследствии
+            //    выбрать, прямой вызов функции нужно делать или вызов замыкания)
+            let closure_found = not(body_free_vars.IsEmpty)
+            let known' = if closure_found then known else known.Add name
+            
+            // 3. Рекурсивно вычисляем body, формируем новое объявление функции верхнего
+            //    уровня и соединяем его с именами, полученными после рекурсивного вызова
+            let env' = env.Add name t
+            let env'' = env'.AddList argts
+            let body', toplevel_with_body_defs = body |> convert env'' known' toplevel
             let fun_definition : ClosureRepresentation.fundef =
                 {
                     name = (Id.L(name), t)
@@ -96,20 +96,22 @@ module ClosureRepresentationConv =
                     free_vars = body_free_vars_with_types |> List.rev
                     body = body'
                 }
-            let toplevel'' = fun_definition :: toplevel'
-            let cont', toplevel''' = cont |> convert env' known' toplevel''
-            let cont_free_vars = cont' |> ClosureRepresentation.free_vars
-            match cont_free_vars.Contains name with
-            | true ->
-                ClosureRepresentation.MakeClosure(
-                    (name, t),
-                    {
-                        entry = name |> Id.L
-                        actual_free_vars = body_free_vars
-                    },
-                    cont'
-                ), toplevel'''
-            | _ -> cont', toplevel'''    
+            let toplevel' = fun_definition :: toplevel_with_body_defs
+            
+            // 4. Рекурсивно вычисляем cont и возвращаем итоговое значение и toplevel,
+            //    при этом возможны 3 варианта развития событий:
+            //    1. По какой-то причине в cont вообще не использовалось наше объявление
+            //       функции. В таком случае не должно создаваться замыкание, вместо этого
+            //       возвращаются модифицированные cont и toplevel
+            //    2. Объявление использовалось в cont, но свободных переменных нет в body,
+            //       в этом случае тоже не нужно создавать замыкание
+            //    3. Во всех остальных случаях создаём замыкание
+            let cont_used_vars = cont |> KNorm.used_vars
+            
+            match cont |> convert env' known' toplevel' with
+            | cont', toplevel'' when not(cont_used_vars.Contains name) -> cont', toplevel''
+            | cont', toplevel'' when body_free_vars.IsEmpty -> cont', toplevel''
+            | cont', toplevel'' -> ClosureRepresentation.MakeClosure((name, t), name |> Id.L, cont'), toplevel''
             
     let f e : ClosureRepresentation.program =
         let main, toplevel = e |> convert (M.Empty ()) (S.Empty ()) []
