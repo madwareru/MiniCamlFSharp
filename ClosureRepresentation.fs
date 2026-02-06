@@ -71,4 +71,4 @@ module ClosureRepresentation =
         // Фактически, данная операция подменяет
         // LetRec из Syntax и KNorm, с тем исключением, что
         // fundef уехал в toplevel и всегда там живёт
-        | MakeClosure of (Id.t * Type.t) * Id.l * t
+        | LetClosure of (Id.t * Type.t) * Id.l * t

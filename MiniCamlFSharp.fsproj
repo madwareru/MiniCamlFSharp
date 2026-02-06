@@ -44,6 +44,7 @@
     <Compile Include="KOptimizationTests.fs" />
     <Compile Include="ClosureRepresentation.fs" />
     <Compile Include="ClosureRepresentationConv.fs"/>
+    <Compile Include="ClosureRepresentationConvTests.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
 

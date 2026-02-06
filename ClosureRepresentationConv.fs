@@ -69,7 +69,13 @@ module ClosureRepresentationConv =
             //    в closure в случае если мы имеем дело с замыканием
             let args = argts |> List.map fst
             let body_used_vars = KNorm.used_vars body
-            let body_free_vars = body_used_vars.Exclude((S.OfList args).Add name).Elements ()
+            let body_free_vars =
+                body_used_vars
+                    .Exclude((S.OfList args).Add name)
+                    .Elements()
+                    // Сортировка большей частью нужна для стабильности при тестировании
+                    |> List.sort
+                    
             let mutable body_free_vars_with_types = []
             for free_var in body_free_vars do
                 match env.TryFind free_var with
@@ -111,7 +117,7 @@ module ClosureRepresentationConv =
             match cont |> convert env' known' toplevel' with
             | cont', toplevel'' when not(cont_used_vars.Contains name) -> cont', toplevel''
             | cont', toplevel'' when body_free_vars.IsEmpty -> cont', toplevel''
-            | cont', toplevel'' -> ClosureRepresentation.MakeClosure((name, t), name |> Id.L, cont'), toplevel''
+            | cont', toplevel'' -> ClosureRepresentation.LetClosure((name, t), name |> Id.L, cont'), toplevel''
             
     let f e : ClosureRepresentation.program =
         let main, toplevel = e |> convert (M.Empty ()) (S.Empty ()) []
