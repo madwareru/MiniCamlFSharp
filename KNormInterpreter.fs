@@ -55,6 +55,18 @@ module KNormInterpreter =
             let ix = lookup_i ix
             arr[int ix] <- lookup_var v
             value_t.Unit
+
+        // Ветвления:
+        | KNorm.BranchEq(lhs, rhs, then_e, else_e) ->
+            let cmp_op = InterpreterShared.EQ
+            match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
+            | true -> then_e |> interpret env
+            | false -> else_e |> interpret env
+        | KNorm.BranchLE(lhs, rhs, then_e, else_e) ->
+            let cmp_op = InterpreterShared.LE
+            match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
+            | true -> then_e |> interpret env
+            | false -> else_e |> interpret env
             
         // Связывания имён:
         | KNorm.Let((name, _), body, cont) ->
@@ -85,18 +97,6 @@ module KNormInterpreter =
 
             let env' = env.Add name v
             cont |> interpret env'
-
-        // Ветвления:
-        | KNorm.BranchEq(lhs, rhs, then_e, else_e) ->
-            let cmp_op = InterpreterShared.EQ
-            match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
-            | true -> then_e |> interpret env
-            | false -> else_e |> interpret env
-        | KNorm.BranchLE(lhs, rhs, then_e, else_e) ->
-            let cmp_op = InterpreterShared.LE
-            match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
-            | true -> then_e |> interpret env
-            | false -> else_e |> interpret env
 
         // Применения функций:
         | KNorm.Apply(func_name, args) ->

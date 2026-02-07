@@ -1,4 +1,4 @@
-module mini_caml_fsharp.KNormInterpreterTests
+module mini_caml_fsharp.InterpreterTestsKNorm
 
 open Microsoft.FSharp.Core
 open NUnit.Framework
@@ -13,12 +13,12 @@ open mini_caml_fsharp.Assoc
 open mini_caml_fsharp.Inlining
 open mini_caml_fsharp.ConstFolding
 open mini_caml_fsharp.Elimination
-open mini_caml_fsharp.KNormInterpreter
 open mini_caml_fsharp.InterpreterShared
+open mini_caml_fsharp.KNormInterpreter
 
 type private test_case = { s_expr: string; expected_res: KNormInterpreter.value_t }
 
-let private k_norm_tests: test_case list = [
+let private interpretation_tests: test_case list = [
     {
         s_expr = "()"
         expected_res = InterpreterShared.Unit
@@ -204,7 +204,7 @@ let private k_norm_tests: test_case list = [
 
 [<Test>]
 let testKNormInterpretation () =
-    for case in k_norm_tests do
+    for case in interpretation_tests do
         Id.reset ()
         let k_form =
             case.s_expr
@@ -230,7 +230,7 @@ let testKNormOptimizedInterpretation () =
             let e' = e' |> Elimination.f
             if e = e' then e' else iter (n - 1) e'
     
-    for case in k_norm_tests do
+    for case in interpretation_tests do
         Id.reset ()
         let k_form =
             case.s_expr
