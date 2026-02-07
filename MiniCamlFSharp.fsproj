@@ -17,6 +17,7 @@
     <Compile Include="Id.fs" />
     <Compile Include="M.fs" />
     <Compile Include="S.fs" />
+    <Compile Include="InterpreterShared.fs" />
     <Compile Include="STests.fs" />
     <Compile Include="Syntax.fs" />
     <Compile Include="Parsing.fs" />

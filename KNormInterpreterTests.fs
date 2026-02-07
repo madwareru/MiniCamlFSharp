@@ -14,85 +14,86 @@ open mini_caml_fsharp.Inlining
 open mini_caml_fsharp.ConstFolding
 open mini_caml_fsharp.Elimination
 open mini_caml_fsharp.KNormInterpreter
+open mini_caml_fsharp.InterpreterShared
 
 type private test_case = { s_expr: string; expected_res: KNormInterpreter.value_t }
 
 let private k_norm_tests: test_case list = [
     {
         s_expr = "()"
-        expected_res = KNormInterpreter.Unit
+        expected_res = InterpreterShared.Unit
     }
     {
         s_expr = "13"
-        expected_res = KNormInterpreter.Int 13
+        expected_res = InterpreterShared.Int 13
     }
     {
         s_expr = "(let x = (<= 5 10) in x)"
-        expected_res = KNormInterpreter.Int 1
+        expected_res = InterpreterShared.Int 1
     }
     {
         s_expr = "(let x = (= 5 10) in x)"
-        expected_res = KNormInterpreter.Int 0
+        expected_res = InterpreterShared.Int 0
     }
     {
         s_expr = "(let x = 5 in x)"
-        expected_res = KNormInterpreter.Int 5
+        expected_res = InterpreterShared.Int 5
     }
     {
         s_expr = "(let x = 5 in (- x))"
-        expected_res = KNormInterpreter.Int -5
+        expected_res = InterpreterShared.Int -5
     }
     {
        s_expr = "(let x = #t in x)"
-       expected_res = KNormInterpreter.Int 1
+       expected_res = InterpreterShared.Int 1
     }
     {
        s_expr = "(let x = #t in (not x))"
-       expected_res = KNormInterpreter.Int 0
+       expected_res = InterpreterShared.Int 0
     }
     {
         s_expr = "(let x = 123.456 in x)"
-        expected_res = KNormInterpreter.Float 123.456
+        expected_res = InterpreterShared.Float 123.456
     }
     {
         s_expr = "(let x = 123.456 in (-. x))"
-        expected_res = KNormInterpreter.Float -123.456
+        expected_res = InterpreterShared.Float -123.456
     }
     {
         s_expr = "(let x : (, i _) = (, 5 #t) in x)"
-        expected_res = KNormInterpreter.Tuple [ KNormInterpreter.Int 5; KNormInterpreter.Int 1 ]
+        expected_res = InterpreterShared.Tuple [ InterpreterShared.Int 5; InterpreterShared.Int 1 ]
     }
     {
         s_expr = "(let (, x y z) = (, 10 #t 42) in (if y then x else z))"
-        expected_res = KNormInterpreter.Int 10
+        expected_res = InterpreterShared.Int 10
     }
     {
         s_expr = "(let (, x y z) = (, 10 #f 42) in (if y then x else z))"
-        expected_res = KNormInterpreter.Int 42
+        expected_res = InterpreterShared.Int 42
     }
     {
         s_expr = "(let (, x y z) = (, 10 #f 42) in (if (not y) then x else z))"
-        expected_res = KNormInterpreter.Int 10
+        expected_res = InterpreterShared.Int 10
     }
     {
         s_expr = "(let-rec (add x y) = (+ x y) in (add 12 30))"
-        expected_res = KNormInterpreter.Int 42
+        expected_res = InterpreterShared.Int 42
     }
     {
         s_expr = "(let-rec (sub3 x y z) = (- x y z) in (sub3 12 3 4))"
-        expected_res = KNormInterpreter.Int 5
+        expected_res = InterpreterShared.Int 5
     }
     {
         s_expr = "(let-rec (add x y) = (+. x y) in (add 12.5 12.5))"
-        expected_res = KNormInterpreter.Float 25.0
+        expected_res = InterpreterShared.Float 25.0
     }
     {
         s_expr = "(*. 1.0 2.0 3.0 4.0 5.0)"
-        expected_res = KNormInterpreter.Float 120.0
+        expected_res = InterpreterShared.Float 120.0
     }
     {
         s_expr = "(/. 33.0 3.0 0.5)"
-        expected_res = KNormInterpreter.Float 22.0
+        expected_res = InterpreterShared.Float 22.0
     }
     {
         s_expr = @"
@@ -101,7 +102,7 @@ let private k_norm_tests: test_case list = [
                     then 1
                     else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 6))
         "
-        expected_res = KNormInterpreter.Int 13
+        expected_res = InterpreterShared.Int 13
     }
     {
         s_expr = @"
@@ -115,7 +116,7 @@ let private k_norm_tests: test_case list = [
                 in (fib-tail 1 1 x))
               in (fib 6))
         "
-        expected_res = KNormInterpreter.Int 13
+        expected_res = InterpreterShared.Int 13
     }
     {
         s_expr = @"
@@ -124,7 +125,7 @@ let private k_norm_tests: test_case list = [
                     then 1.0
                     else (*. x (fact (-. x 1.0 )))) in (fact 6.0))
         "
-        expected_res = KNormInterpreter.Float 720.0
+        expected_res = InterpreterShared.Float 720.0
     }
     {
         s_expr = @"
@@ -132,7 +133,7 @@ let private k_norm_tests: test_case list = [
                 (let (, x y z) = t in (+ x y z)) in
                 (foo (, 3 4 5)))
         "
-        expected_res = KNormInterpreter.Int 12
+        expected_res = InterpreterShared.Int 12
     }
     {
         s_expr = @"
@@ -142,7 +143,7 @@ let private k_norm_tests: test_case list = [
                     else (*. x (fact (-. x 1.0 )))) in
                 (let f = fact in (f 6.0) ))
         "
-        expected_res = KNormInterpreter.Float 720.0
+        expected_res = InterpreterShared.Float 720.0
     }
     {
         s_expr = @"
@@ -154,7 +155,7 @@ let private k_norm_tests: test_case list = [
                     (get[] arr 0)
                     (get[] arr 1))))
         "
-        expected_res = KNormInterpreter.Int 30
+        expected_res = InterpreterShared.Int 30
     }
     {
         s_expr = @"
@@ -166,7 +167,7 @@ let private k_norm_tests: test_case list = [
                     (get[] arr 0)
                     (get[] arr 1))))
         "
-        expected_res = KNormInterpreter.Float 30.0
+        expected_res = InterpreterShared.Float 30.0
     }
     {
         s_expr = @"
@@ -177,7 +178,7 @@ let private k_norm_tests: test_case list = [
                     (let (, x _) = (get[] arr 0) in x)
                     (let (, y _) = (get[] arr 1) in y))))
         "
-        expected_res = KNormInterpreter.Int 20
+        expected_res = InterpreterShared.Int 20
     }
     {
         // Императивный факториал
@@ -197,7 +198,7 @@ let private k_norm_tests: test_case list = [
                 (fact-step 6.0)
                 (get[] acc 0))))
         "
-        expected_res = KNormInterpreter.Float 720.0
+        expected_res = InterpreterShared.Float 720.0
     }
 ]
 
