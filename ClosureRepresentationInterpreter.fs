@@ -101,27 +101,27 @@ module ClosureRepresentationInterpreter =
             fn.body |> interpret_expr top_level_env env'
                     
         | ClosureRepresentation.ApplyDirect(Id.L label, args) ->
-            match label, args with
-            | "min_caml_create_float_array", [ count; v ] ->
-                let count = lookup_i count
-                let v = lookup_f v
-                let arr = Array.create (int count) (value_t.Float v)
-                value_t.Array arr
-            | "min_caml_create_array", [ count; v ] ->
-                let count = lookup_i count
-                let v = lookup_var v
-                let arr = Array.create (int count) v
-                value_t.Array arr
-            | _ ->
-                match top_level_env.TryFind label with
-                | None -> failwithf $"toplevel function with label %s{label}  not found"
-                | Some(fn, _) ->
-                    let mutable env' = fn.env.Add fn.recursive_name (value_t.Func fn)
-                    for name, v in (List.zip fn.arg_names args) do
-                        let v' = lookup_var v
-                        env' <- env'.Add name v'
-                    fn.body |> interpret_expr top_level_env env'
-    
+            match top_level_env.TryFind label with
+            | Some(fn, _) ->
+                let mutable env' = fn.env
+                for name, v in (List.zip fn.arg_names args) do
+                    let v' = lookup_var v
+                    env' <- env'.Add name v'
+                fn.body |> interpret_expr top_level_env env'
+            | None -> 
+                match label, args with
+                | "min_caml_create_float_array", [ count; v ] ->
+                    let count = lookup_i count
+                    let v = lookup_f v
+                    let arr = Array.create (int count) (value_t.Float v)
+                    value_t.Array arr
+                | "min_caml_create_array", [ count; v ] ->
+                    let count = lookup_i count
+                    let v = lookup_var v
+                    let arr = Array.create (int count) v
+                    value_t.Array arr
+                | _ -> failwithf $"toplevel function with label %s{label}  not found"
+                
     let f (p : ClosureRepresentation.program) =
         let env = M.Empty ()
         let mutable top_level_env = M.Empty ()
