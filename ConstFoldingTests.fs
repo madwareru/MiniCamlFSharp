@@ -171,7 +171,7 @@ let testConstFold () =
             |> Parsing.f
             |> Typing.f
             |> KNormalisation.f
-        
+
         let converted =
             k_form
             |> AlphaConv.f

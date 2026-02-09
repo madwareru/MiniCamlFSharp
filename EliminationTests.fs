@@ -84,7 +84,7 @@ let testUnusedLetElimination () =
             |> Parsing.f
             |> Typing.f
             |> KNormalisation.f
-        
+
         let converted =
             k_form
             |> AlphaConv.f
@@ -98,4 +98,3 @@ let testUnusedLetElimination () =
         let res = k_form |> KNormInterpreter.f
         let res' = converted |> KNormInterpreter.f
         Assert.AreEqual(res, res')
-

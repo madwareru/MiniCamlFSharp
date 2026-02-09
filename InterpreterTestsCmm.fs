@@ -191,7 +191,7 @@ let private interpretation_tests: test_case list = [
                 (if (;тут-был-вася (<= x 1.0))
                     then ()
                     else
-                        (;Внимание!!!!-мутабельность!!!!-аыаыаыа 
+                        (;Внимание!!!!-мутабельность!!!!-аыаыаыа
                             (let v = (get[] acc 0) in
                             (let v' = (*. x v) in
                             (;
@@ -219,7 +219,7 @@ let testCmmInterpretation () =
             let e' = e' |> ConstFolding.f
             let e' = e' |> Elimination.f
             if e = e' then e' else iter (n - 1) e'
-    
+
     for case in interpretation_tests do
         Id.reset ()
         let k_form =
@@ -229,7 +229,7 @@ let testCmmInterpretation () =
             |> Typing.f
             |> KNormalisation.f
             |> AlphaConv.f
-        
+
         let converted =
             (limit, k_form)
             ||> iter

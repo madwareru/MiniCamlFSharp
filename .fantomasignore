@@ -1,2 +1,2 @@
 #Ignore test files
-*Tests.fs
+*Tests*.fs

@@ -90,7 +90,7 @@ let testKOptimizations () =
             let e' = e' |> ConstFolding.f
             let e' = e' |> Elimination.f
             if e = e' then e' else iter (n - 1) e'
-    
+
     for case in tests do
         Id.reset ()
         let k_form =
@@ -100,11 +100,10 @@ let testKOptimizations () =
             |> Typing.f
             |> KNormalisation.f
             |> AlphaConv.f
-        
+
         let converted = (limit, k_form) ||> iter
         Assert.AreNotEqual(k_form, converted)
         Assert.AreEqual(case.expected_k_form, converted)
         let res = k_form |> KNormInterpreter.f
         let res' = converted |> KNormInterpreter.f
         Assert.AreEqual(res, res')
-

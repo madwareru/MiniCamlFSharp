@@ -16,7 +16,7 @@ module InterpreterShared =
           arg_names: string list
           env: 't value_t M
           body: 't }
-        
+
     type Comparison =
         | EQ
         | LE
@@ -41,33 +41,33 @@ module InterpreterShared =
         // функции сравниваются только на равенство и только ссылочно
         | value_t.Func f_l, value_t.Func f_r when cmp = EQ -> System.Object.ReferenceEquals(f_l, f_r)
         | _ -> failwith "can't compare incompatible types"
-        
-    let lookup_var var_name (env : 't value_t M) =
-            match env.TryFind var_name with
-            | Some v -> v
-            | _ -> failwithf $"name %s{var_name} not found in an environment!"
-            
-    let lookup_i var_name (env : 't value_t M) =
+
+    let lookup_var var_name (env: 't value_t M) =
+        match env.TryFind var_name with
+        | Some v -> v
+        | _ -> failwithf $"name %s{var_name} not found in an environment!"
+
+    let lookup_i var_name (env: 't value_t M) =
         match env.TryFind var_name with
         | Some(value_t.Int i) -> i
         | _ -> failwithf $"name %s{var_name} with type i not found in an environment!"
-        
-    let lookup_f var_name (env : 't value_t M) =
+
+    let lookup_f var_name (env: 't value_t M) =
         match env.TryFind var_name with
         | Some(value_t.Float f) -> f
         | _ -> failwithf $"name %s{var_name} with type f not found in an environment!"
-        
-    let lookup_arr var_name (env : 't value_t M) =
+
+    let lookup_arr var_name (env: 't value_t M) =
         match env.TryFind var_name with
         | Some(value_t.Array arr) -> arr
         | _ -> failwith $"name %s{var_name} with type [] not found in an environment!"
-        
-    let lookup_tuple var_name (env : 't value_t M) =
+
+    let lookup_tuple var_name (env: 't value_t M) =
         match env.TryFind var_name with
         | Some(value_t.Tuple values) -> values
         | _ -> failwith $"name %s{var_name} with type (,) not found in an environment!"
-        
-    let lookup_fn var_name (env : 't value_t M) =
+
+    let lookup_fn var_name (env: 't value_t M) =
         match env.TryFind var_name with
         | Some(value_t.Func fn) -> fn
         | _ -> failwith $"name %s{var_name} with type fn not found in an environment!"

@@ -49,8 +49,8 @@ open mini_caml_fsharp.Type
         той причине, что все значения в языке имеют
         одинаковый размер (размер машинного слова
         или 8 байт)
-    06. Создание замыкания во многом аналогично предыдущему 
-        пункту, в том смысле, что создаётся область памяти 
+    06. Создание замыкания во многом аналогично предыдущему
+        пункту, в том смысле, что создаётся область памяти
         размера 1 + количество свободных переменных функции,
         далее в первую ячейку записывается указатель на функцию,
         а в дальнейшие ячейки записываются все замкнутые значения
@@ -64,51 +64,50 @@ module Cmm =
         | Int of int64
         | Float of double
         | FunctionPtr of Id.l
-    
+
     type block_t =
         | Seq of statement_t * block_t
         | Return of expr_t
-    and statement_t =
-        | Assignment of (Id.t * Type.t) * expr_t
+
+    and statement_t = Assignment of (Id.t * Type.t) * expr_t
+
     and expr_t =
         // Атомы и ссылки на переменные
         | Atom of atom_expr_t
         | Var of Id.t
-        
+
         // Операции над целыми числами
         | Neg of Id.t
         | Add of Id.t * Id.t
         | Sub of Id.t * Id.t
-        
+
         // Операции над числами с плавающей точкой
         | FNeg of Id.t
         | FAdd of Id.t * Id.t
         | FSub of Id.t * Id.t
         | FMul of Id.t * Id.t
         | FDiv of Id.t * Id.t
-        
+
         // Операции над массивами, кортежами и замыканиями
         | MemoryGet of Id.t * Id.t
         | MemoryPut of Id.t * Id.t * Id.t
         | ExternalMemory of Id.l
-        
+
         // Прямой вызов функции по метке из toplevel
         | ApplyDirect of Id.l * Id.t list
         // Вызов замыкания
         | ApplyClosure of Id.t * Id.t list
-        
+
         // Ветвления
         | BranchEq of Id.t * Id.t * block_t * block_t
         | BranchLE of Id.t * Id.t * block_t * block_t
-        
-    type fn_t = {
-        name: Id.l * Type.t
-        args: (Id.t * Type.t) list
-        free_vars: (Id.t * Type.t) list
-        body: block_t
-    }
-    
-    type program_t = {
-        top_level_functions: fn_t list
-        entry: block_t
-    }
+
+    type fn_t =
+        { name: Id.l * Type.t
+          args: (Id.t * Type.t) list
+          free_vars: (Id.t * Type.t) list
+          body: block_t }
+
+    type program_t =
+        { top_level_functions: fn_t list
+          entry: block_t }

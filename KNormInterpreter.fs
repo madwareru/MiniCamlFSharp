@@ -12,17 +12,23 @@ module KNormInterpreter =
     type value_t = KNorm.t InterpreterShared.value_t
 
     let rec private interpret (env: value_t M) (e: KNorm.t) =
-        let lookup_var var_name = env |> InterpreterShared.lookup_var var_name
-  
-        let lookup_i var_name = env |> InterpreterShared.lookup_i var_name
-            
-        let lookup_f var_name = env |> InterpreterShared.lookup_f var_name
-            
-        let lookup_arr var_name = env |> InterpreterShared.lookup_arr var_name
-            
-        let lookup_tuple var_name = env |> InterpreterShared.lookup_tuple var_name
-            
-        let lookup_fn var_name = env |> InterpreterShared.lookup_fn var_name
+        let lookup_var var_name =
+            env |> InterpreterShared.lookup_var var_name
+
+        let lookup_i var_name =
+            env |> InterpreterShared.lookup_i var_name
+
+        let lookup_f var_name =
+            env |> InterpreterShared.lookup_f var_name
+
+        let lookup_arr var_name =
+            env |> InterpreterShared.lookup_arr var_name
+
+        let lookup_tuple var_name =
+            env |> InterpreterShared.lookup_tuple var_name
+
+        let lookup_fn var_name =
+            env |> InterpreterShared.lookup_fn var_name
 
         match e with
         // Простые литералы:
@@ -59,15 +65,17 @@ module KNormInterpreter =
         // Ветвления:
         | KNorm.BranchEq(lhs, rhs, then_e, else_e) ->
             let cmp_op = InterpreterShared.EQ
+
             match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
             | true -> then_e |> interpret env
             | false -> else_e |> interpret env
         | KNorm.BranchLE(lhs, rhs, then_e, else_e) ->
             let cmp_op = InterpreterShared.LE
+
             match (lookup_var lhs, lookup_var rhs) ||> InterpreterShared.cmp_values cmp_op with
             | true -> then_e |> interpret env
             | false -> else_e |> interpret env
-            
+
         // Связывания имён:
         | KNorm.Let((name, _), body, cont) ->
             let res = body |> interpret env
@@ -102,9 +110,11 @@ module KNormInterpreter =
         | KNorm.Apply(func_name, args) ->
             let fn = lookup_fn func_name
             let mutable env' = fn.env.Add fn.recursive_name (value_t.Func fn)
+
             for name, v in (List.zip fn.arg_names args) do
                 let v' = lookup_var v
                 env' <- env'.Add name v'
+
             fn.body |> interpret env'
         | KNorm.ExtFunApply(func_name, args) ->
             match func_name, args with
