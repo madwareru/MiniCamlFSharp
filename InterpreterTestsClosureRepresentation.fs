@@ -1,4 +1,4 @@
-module mini_campl_fsharp.InterpreterTestsClosureRepresentation
+module mini_caml_fsharp.InterpreterTestsClosureRepresentation
 
 open Microsoft.FSharp.Core
 open NUnit.Framework
