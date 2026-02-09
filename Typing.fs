@@ -342,6 +342,8 @@ module Typing =
 
     let f e =
         extenv.Value <- M.Empty()
-        let _ = e |> infer (M.Empty())
+        let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
-        deref_term e
+        match deref_typ expr_type with
+        | Type.FunType _ -> failwith "programs with a return type of a function is not supported"
+        | _ -> deref_term e
