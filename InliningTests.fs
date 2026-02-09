@@ -45,7 +45,7 @@ let testInlining() =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
         let converted =
             k_form

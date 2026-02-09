@@ -97,7 +97,7 @@ let testKOptimizations () =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> AlphaConv.f
 

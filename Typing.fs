@@ -11,9 +11,13 @@ module Typing =
     exception UnifyException of Type.t * Type.t
     type TypingErrorInfo = { expr: t; lhs: Type.t; rhs: Type.t }
     exception TypingException of TypingErrorInfo
+    
+    type program_output_typing_rule =
+        | ProgramShouldReturnUnit
+        | ProgramShouldNotReturnFunction
 
     // "Внешние" переменные
-    let extenv: (Type.t M) ref = ref (M.Empty())
+    let extenv: Type.t M ref = ref (M.Empty())
 
     /// <summary>
     /// Функция, которая заменяет переменные типов их содержимым. Замена происходит рекурсивно.
@@ -340,10 +344,12 @@ module Typing =
         with UnifyException(t1, t2) ->
             raise (TypingException { expr = e; lhs = t1; rhs = t2 })
 
-    let f e =
+    let f (typing_rule : program_output_typing_rule) e =
         extenv.Value <- M.Empty()
         let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
-        match deref_typ expr_type with
-        | Type.FunType _ -> failwith "programs with a return type of a function is not supported"
+        match typing_rule, deref_typ expr_type with
+        | ProgramShouldReturnUnit, Type.UnitType -> deref_term e
+        | ProgramShouldNotReturnFunction, Type.FunType _ ->
+            failwith "programs with a return type of a function is not supported"
         | _ -> deref_term e

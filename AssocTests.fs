@@ -118,7 +118,7 @@ let testAssocTransformation () =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> Assoc.f
         Assert.AreEqual(case.expected_k_form, k_form)

@@ -217,7 +217,7 @@ let testKNormInterpretation () =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
         let res = k_form |> KNormInterpreter.f
         Assert.AreEqual(case.expected_res, res)
@@ -243,7 +243,7 @@ let testKNormOptimizedInterpretation () =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> AlphaConv.f
 

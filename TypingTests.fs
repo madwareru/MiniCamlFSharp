@@ -129,5 +129,5 @@ let testTyping () =
             case.s_expr
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f
+            |> Typing.f Typing.ProgramShouldNotReturnFunction
         Assert.AreEqual(case.expected_syntax, parsed_syntax)
