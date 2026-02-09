@@ -39,30 +39,37 @@ module CmmDeclosuredConv =
         | Cmm.ApplyClosure(name, args) -> CmmDeclosured.Apply(Id.L name, name :: args)
     
     let private convert_fn (fn : Cmm.fn_t) =
-        let _, fn_t = fn.name
-        let arg_ts = fn.args |> List.map snd
-        let closure_t = Type.TupleType <| fn_t :: arg_ts
-        let closure_id = Id.gen_tmp closure_t
-        
-        let args' = (closure_id, closure_t) :: fn.args
-        
-        let mutable body' = fn.body |> convert_block
-        let mutable i = fn.args.Length
-        for id, t in fn.args |> List.rev do
-            let id_i = Id.gen_tmp Type.IntType
-            body' <- CmmDeclosured.Seq(
-                CmmDeclosured.Assignment((id, t), CmmDeclosured.MemoryGet(closure_id, id_i)),
-                body'
-            )
-            body' <- CmmDeclosured.Seq(
-                CmmDeclosured.Assignment((id_i, Type.IntType), CmmDeclosured.Atom <| CmmDeclosured.Int i),
-                body'
-            )
-        {
-            CmmDeclosured.name = fn.name
-            CmmDeclosured.args = args'
-            CmmDeclosured.body = body'
-        }
+        if fn.free_vars.IsEmpty then
+            {
+                CmmDeclosured.name = fn.name
+                CmmDeclosured.args = fn.args
+                CmmDeclosured.body = fn.body |> convert_block
+            }
+        else
+            let _, fn_t = fn.name
+            let free_vars_ts = fn.args |> List.map snd
+            let closure_t = Type.TupleType <| fn_t :: free_vars_ts
+            let closure_id = Id.gen_tmp closure_t
+            
+            let args' = (closure_id, closure_t) :: fn.args
+            
+            let mutable body' = fn.body |> convert_block
+            let mutable i = fn.free_vars.Length
+            for id, t in fn.free_vars |> List.rev do
+                let id_i = Id.gen_tmp Type.IntType
+                body' <- CmmDeclosured.Seq(
+                    CmmDeclosured.Assignment((id, t), CmmDeclosured.MemoryGet(closure_id, id_i)),
+                    body'
+                )
+                body' <- CmmDeclosured.Seq(
+                    CmmDeclosured.Assignment((id_i, Type.IntType), CmmDeclosured.Atom <| CmmDeclosured.Int i),
+                    body'
+                )
+            {
+                CmmDeclosured.name = fn.name
+                CmmDeclosured.args = args'
+                CmmDeclosured.body = body'
+            }
     
     let f (p : Cmm.program_t) =
         let top_level_functions' = p.top_level_functions |> List.map convert_fn
