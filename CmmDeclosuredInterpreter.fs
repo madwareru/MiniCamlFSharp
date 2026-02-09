@@ -33,7 +33,7 @@ module CmmDeclosuredInterpreter =
         // функции сравниваются только на равенство
         | value_t.FunctionPtr f_l, value_t.FunctionPtr f_r when cmp = InterpreterShared.EQ -> f_l = f_r
         | _ -> failwith "can't compare incompatible types"
-        
+
     let private lookup_var var_name (env: value_t M) =
         match env.TryFind var_name with
         | Some v -> v
@@ -62,7 +62,7 @@ module CmmDeclosuredInterpreter =
                 let env' = env.Add name (e |> interpret_exp top_level_env env)
                 next_block |> interpret_block top_level_env env'
         | CmmDeclosured.Return e -> e |> interpret_exp top_level_env env
-        
+
     and private interpret_exp (top_level_env: TopLevelM) env (e: CmmDeclosured.expr_t) =
         let lookup_var var_name = env |> lookup_var var_name
 
@@ -149,7 +149,7 @@ module CmmDeclosuredInterpreter =
                     let mem = Array.create (int count) v
                     value_t.Memory mem
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"
-    
+
     let f (p: CmmDeclosured.program_t) =
         let env = M.Empty()
         let mutable (top_level_env: TopLevelM) = M.Empty()

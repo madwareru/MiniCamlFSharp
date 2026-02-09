@@ -8,8 +8,8 @@ open mini_caml_fsharp.Type
     Отличия:
       - Отсутствует операция вызова замыкания;
       - Отсутствует список свободных переменных в toplevel функции;
-      
-    Основная идея такова, что программу в представлении Cmm можно 
+
+    Основная идея такова, что программу в представлении Cmm можно
     преобразовать к такому виду, где toplevel функция, ожидавшая
     ранее, что её будут вызывать особенным образом теперь имеет
     специальный первый параметр, где лежит кортеж с замыканием,
@@ -17,7 +17,7 @@ open mini_caml_fsharp.Type
     в локальные переменные с именами соответствующими таковым в
     свободных. Вызов замыкания же превращается в обычный прямой
     вызов с передачей этого замыкания в первый аргумент.
-        
+
 *)
 module CmmDeclosured =
     type atom_expr_t =
@@ -25,11 +25,11 @@ module CmmDeclosured =
         | Int of int64
         | Float of double
         | FunctionPtr of Id.l
-        
+
     type block_t =
         | Seq of statement_t * block_t
         | Return of expr_t
-        
+
     and statement_t = Assignment of (Id.t * Type.t) * expr_t
 
     and expr_t =
@@ -60,12 +60,12 @@ module CmmDeclosured =
         // Ветвления
         | BranchEq of Id.t * Id.t * block_t * block_t
         | BranchLE of Id.t * Id.t * block_t * block_t
-        
+
     type fn_t =
         { name: Id.l * Type.t
           args: (Id.t * Type.t) list
           body: block_t }
-        
+
     type program_t =
         { top_level_functions: fn_t list
           entry: block_t }
