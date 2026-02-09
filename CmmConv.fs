@@ -1,6 +1,5 @@
 module mini_caml_fsharp.CmmConv
 
-open NUnit.Framework
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
 open mini_caml_fsharp.M
@@ -160,9 +159,10 @@ module CmmConv =
 
                     ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                     i <- i - 1
-
+                
                 let id_i = Id.gen_tmp Type.IntType
-                let self_ref_id = Id.gen_tmp t
+                let tuple_t = Type.TupleType <| t :: (free_vars |> List.map snd)
+                let self_ref_id = Id.gen_tmp tuple_t
                 ret <- Seq(Assignment((Id.gen_tmp Type.UnitType, Type.IntType), MemoryPut(id, id_i, self_ref_id)), ret)
                 ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                 ret <- Seq(Assignment((self_ref_id, t), Atom <| FunctionPtr(Id.L label)), ret)
