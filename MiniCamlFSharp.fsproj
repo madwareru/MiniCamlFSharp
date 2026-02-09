@@ -54,6 +54,7 @@
     <Compile Include="CmmDeclosuredInterpreter.fs" />
     <Compile Include="CmmDeclosuredConv.fs" />
     <Compile Include="InterpreterTests.fs" />
+    <Compile Include="GenC.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
