@@ -40,23 +40,20 @@
     <Compile Include="ConstFolding.fs" />
     <Compile Include="ConstFoldingTests.fs" />
     <Compile Include="Elimination.fs" />
-    <Compile Include="InterpreterTestsKNorm.fs" />
     <Compile Include="EliminationTests.fs" />
     <Compile Include="KOptimizationTests.fs" />
     <Compile Include="ClosureRepresentation.fs" />
     <Compile Include="ClosureRepresentationInterpreter.fs" />
     <Compile Include="ClosureRepresentationConv.fs" />
     <Compile Include="ClosureRepresentationConvTests.fs" />
-    <Compile Include="InterpreterTestsClosureRepresentation.fs" />
     <Compile Include="Cmm.fs" />
     <Compile Include="CmmInterpreter.fs" />
     <Compile Include="CmmConv.fs" />
     <Compile Include="CmmConvTests.fs" />
-    <Compile Include="InterpreterTestsCmm.fs" />
     <Compile Include="CmmDeclosured.fs" />
     <Compile Include="CmmDeclosuredInterpreter.fs" />
     <Compile Include="CmmDeclosuredConv.fs" />
-    <Compile Include="InterpreterTestsCmmDeclosured.fs" />
+    <Compile Include="InterpreterTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

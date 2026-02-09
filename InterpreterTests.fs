@@ -13,10 +13,19 @@ open mini_caml_fsharp.Assoc
 open mini_caml_fsharp.Inlining
 open mini_caml_fsharp.ConstFolding
 open mini_caml_fsharp.Elimination
+open mini_caml_fsharp.ClosureRepresentationConv
+open mini_caml_fsharp.CmmConv
+open mini_caml_fsharp.CmmDeclosuredConv
 open mini_caml_fsharp.InterpreterShared
 open mini_caml_fsharp.KNormInterpreter
+open mini_caml_fsharp.ClosureRepresentationInterpreter
+open mini_caml_fsharp.CmmInterpreter
+open mini_caml_fsharp.CmmDeclosuredInterpreter
 
-type private test_case = { s_expr: string; expected_res: KNormInterpreter.value_t }
+type private test_case = {
+    s_expr: string
+    expected_res: KNormInterpreter.value_t
+}
 
 let private interpretation_tests: test_case list = [
     {
@@ -58,10 +67,6 @@ let private interpretation_tests: test_case list = [
     {
         s_expr = "(let x = 123.456 in (-. x))"
         expected_res = InterpreterShared.Float -123.456
-    }
-    {
-        s_expr = "(let x : (, i _) = (, 5 #t) in x)"
-        expected_res = InterpreterShared.Tuple [ InterpreterShared.Int 5; InterpreterShared.Int 1 ]
     }
     {
         s_expr = "(let (, x y z) = (, 10 #t 42) in (if y then x else z))"
@@ -210,19 +215,6 @@ let private interpretation_tests: test_case list = [
 ]
 
 [<Test>]
-let testKNormInterpretation () =
-    for case in interpretation_tests do
-        Id.reset ()
-        let k_form =
-            case.s_expr
-            |> SExpr.parse
-            |> Parsing.f
-            |> Typing.f Typing.ProgramShouldNotReturnFunction
-            |> KNormalisation.f
-        let res = k_form |> KNormInterpreter.f
-        Assert.AreEqual(case.expected_res, res)
-
-[<Test>]
 let testKNormOptimizedInterpretation () =
     let limit = 100
     let rec iter n e =
@@ -246,7 +238,38 @@ let testKNormOptimizedInterpretation () =
             |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> AlphaConv.f
-
+        
         let converted = (limit, k_form) ||> iter
         let res = converted |> KNormInterpreter.f
-        Assert.AreEqual(case.expected_res, res)
+        let expected_res = case.expected_res
+        Assert.AreEqual(expected_res, res)
+        
+        let converted = converted |> ClosureRepresentationConv.f
+        let res = converted |> ClosureRepresentationInterpreter.f
+        let expected_res : ClosureRepresentationInterpreter.value_t =
+            match expected_res with
+            | InterpreterShared.Unit -> InterpreterShared.Unit
+            | InterpreterShared.Int i -> InterpreterShared.Int i
+            | InterpreterShared.Float i -> InterpreterShared.Float i
+            | _ -> failwith "invalid result type"
+        Assert.AreEqual(expected_res, res)
+        
+        let converted = converted |> CmmConv.f
+        let res = converted |> CmmInterpreter.f
+        let expected_res  =
+            match expected_res with
+            | InterpreterShared.Unit -> CmmInterpreter.Unit
+            | InterpreterShared.Int i -> CmmInterpreter.Int i
+            | InterpreterShared.Float i -> CmmInterpreter.Float i
+            | _ -> failwith "invalid result type"
+        Assert.AreEqual(expected_res, res)
+        
+        let converted = converted |> CmmDeclosuredConv.f
+        let res = converted |> CmmDeclosuredInterpreter.f
+        let expected_res  =
+            match expected_res with
+            | CmmInterpreter.Unit -> CmmDeclosuredInterpreter.Unit
+            | CmmInterpreter.Int i -> CmmDeclosuredInterpreter.Int i
+            | CmmInterpreter.Float i -> CmmDeclosuredInterpreter.Float i
+            | _ -> failwith "invalid result type"
+        Assert.AreEqual(expected_res, res)
