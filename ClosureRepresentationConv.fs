@@ -85,7 +85,7 @@ module ClosureRepresentationConv =
             //    передавать неизменённый набор known, в противном случае в него нужно
             //    добавить имя нашей функции (это нужно для того, чтобы впоследствии
             //    выбрать, прямой вызов функции нужно делать или вызов замыкания)
-            let closure_found = not (body_free_vars.IsEmpty)
+            let closure_found = not body_free_vars.IsEmpty
             let known' = if closure_found then known else known.Add name
 
             // 3. Рекурсивно вычисляем body, формируем новое объявление функции верхнего

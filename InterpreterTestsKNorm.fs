@@ -137,6 +137,13 @@ let private interpretation_tests: test_case list = [
     }
     {
         s_expr = @"
+            (let (, x y z) = (, 1 2 3) in
+                (let-rec (foo a) = (+ x y z a) in (foo 42)))
+        "
+        expected_res = InterpreterShared.Int 48
+    }
+    {
+        s_expr = @"
             (let-rec (fact x) =
                 (if (<= x 1.0)
                     then 1.0

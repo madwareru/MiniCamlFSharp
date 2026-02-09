@@ -17,7 +17,6 @@ module CmmDeclosuredConv =
         | Cmm.Atom(Cmm.Unit) -> CmmDeclosured.Atom(CmmDeclosured.Unit)
         | Cmm.Atom(Cmm.Int i) -> CmmDeclosured.Atom(CmmDeclosured.Int i)
         | Cmm.Atom(Cmm.Float f) -> CmmDeclosured.Atom(CmmDeclosured.Float f)
-        | Cmm.Atom(Cmm.FunctionPtr f_ptr) -> CmmDeclosured.Atom(CmmDeclosured.FunctionPtr f_ptr)
         | Cmm.Var x -> CmmDeclosured.Var x
         | Cmm.Neg op -> CmmDeclosured.Neg op
         | Cmm.Add(l, r) -> CmmDeclosured.Add(l, r)
@@ -46,15 +45,14 @@ module CmmDeclosuredConv =
                 CmmDeclosured.body = fn.body |> convert_block
             }
         else
-            let _, fn_t = fn.name
             let free_vars_ts = fn.args |> List.map snd
-            let closure_t = Type.TupleType <| fn_t :: free_vars_ts
+            let closure_t = Type.TupleType <| free_vars_ts
             let closure_id = Id.gen_tmp closure_t
             
             let args' = (closure_id, closure_t) :: fn.args
             
             let mutable body' = fn.body |> convert_block
-            let mutable i = fn.free_vars.Length
+            let mutable i = fn.free_vars.Length-1
             for id, t in fn.free_vars |> List.rev do
                 let id_i = Id.gen_tmp Type.IntType
                 body' <- CmmDeclosured.Seq(
@@ -65,6 +63,7 @@ module CmmDeclosuredConv =
                     CmmDeclosured.Assignment((id_i, Type.IntType), CmmDeclosured.Atom <| CmmDeclosured.Int i),
                     body'
                 )
+                i <- i - 1
             {
                 CmmDeclosured.name = fn.name
                 CmmDeclosured.args = args'

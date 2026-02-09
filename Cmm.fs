@@ -63,7 +63,6 @@ module Cmm =
         | Unit
         | Int of int64
         | Float of double
-        | FunctionPtr of Id.l
 
     type block_t =
         | Seq of statement_t * block_t

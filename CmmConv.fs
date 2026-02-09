@@ -148,7 +148,7 @@ module CmmConv =
                 // этой функции.
                 let env' = env.Add id t
                 let mutable ret = cont |> convert_expr top_level_free_var_map env'
-                let l = free_vars.Length + 1
+                let l = free_vars.Length
                 let mutable i = l - 1
 
                 for var_name, _ in free_vars |> List.rev do
@@ -159,13 +159,6 @@ module CmmConv =
 
                     ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                     i <- i - 1
-
-                let id_i = Id.gen_tmp Type.IntType
-                let tuple_t = Type.TupleType <| t :: (free_vars |> List.map snd)
-                let self_ref_id = Id.gen_tmp tuple_t
-                ret <- Seq(Assignment((Id.gen_tmp Type.UnitType, Type.IntType), MemoryPut(id, id_i, self_ref_id)), ret)
-                ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
-                ret <- Seq(Assignment((self_ref_id, t), Atom <| FunctionPtr(Id.L label)), ret)
 
                 let count_id = Id.gen_tmp Type.IntType
                 let apply_expr = ApplyDirect(Id.L "min_caml_alloc_vector", [ count_id ])

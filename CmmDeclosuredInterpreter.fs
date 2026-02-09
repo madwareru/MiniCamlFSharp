@@ -13,7 +13,6 @@ module CmmDeclosuredInterpreter =
         | Unit
         | Int of int64
         | Float of double
-        | FunctionPtr of Id.l
         | Memory of value_t array
 
     let rec private cmp_values cmp l r =
@@ -30,8 +29,6 @@ module CmmDeclosuredInterpreter =
         | value_t.Memory l_vs, value_t.Memory r_vs ->
             let failed = (l_vs, r_vs) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
             not failed
-        // функции сравниваются только на равенство
-        | value_t.FunctionPtr f_l, value_t.FunctionPtr f_r when cmp = InterpreterShared.EQ -> f_l = f_r
         | _ -> failwith "can't compare incompatible types"
         
     let private lookup_var var_name (env: value_t M) =
@@ -77,7 +74,6 @@ module CmmDeclosuredInterpreter =
             | CmmDeclosured.Unit -> value_t.Unit
             | CmmDeclosured.Int i -> value_t.Int i
             | CmmDeclosured.Float f -> value_t.Float f
-            | CmmDeclosured.FunctionPtr l -> value_t.FunctionPtr l
 
         match e with
         | CmmDeclosured.Atom atom_expr -> atom_expr |> interpret_atom_exp

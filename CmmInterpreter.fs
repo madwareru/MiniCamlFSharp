@@ -12,7 +12,6 @@ module CmmInterpreter =
         | Unit
         | Int of int64
         | Float of double
-        | FunctionPtr of Id.l
         | Memory of value_t array
 
     let rec private cmp_values cmp l r =
@@ -29,8 +28,6 @@ module CmmInterpreter =
         | value_t.Memory l_vs, value_t.Memory r_vs ->
             let failed = (l_vs, r_vs) ||> Array.exists2 (fun l r -> not (cmp_values cmp l r))
             not failed
-        // функции сравниваются только на равенство
-        | value_t.FunctionPtr f_l, value_t.FunctionPtr f_r when cmp = InterpreterShared.EQ -> f_l = f_r
         | _ -> failwith "can't compare incompatible types"
 
     let private lookup_var var_name (env: value_t M) =
@@ -76,7 +73,6 @@ module CmmInterpreter =
             | Cmm.Unit -> value_t.Unit
             | Cmm.Int i -> value_t.Int i
             | Cmm.Float f -> value_t.Float f
-            | Cmm.FunctionPtr l -> value_t.FunctionPtr l
 
         match e with
         | Cmm.Atom atom_expr -> atom_expr |> interpret_atom_exp
@@ -148,43 +144,39 @@ module CmmInterpreter =
                     let mem = Array.create (int count) v
                     value_t.Memory mem
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"
-        | Cmm.ApplyClosure(func_name, args) ->
-            let fn_mem = lookup_mem func_name
+        | Cmm.ApplyClosure(label, args) ->
+            let fn_mem = lookup_mem label
+            match top_level_env.TryFind label with
+            | Some(fn) ->
+                // восстанавливаем биндинги к свободным переменным из полученного куска памяти
+                let mutable free_var_bindings = []
 
-            match fn_mem[0] with
-            | value_t.FunctionPtr(Id.L label) ->
-                match top_level_env.TryFind label with
-                | Some(fn) ->
-                    // восстанавливаем биндинги к свободным переменным из полученного куска памяти
-                    let mutable free_var_bindings = []
+                for i in 0 .. (fn.free_vars.Length - 1) do
+                    free_var_bindings <- fn_mem[int i] :: free_var_bindings
 
-                    for i in 0 .. (fn.free_vars.Length - 1) do
-                        free_var_bindings <- fn_mem[int i + 1] :: free_var_bindings
+                free_var_bindings <- free_var_bindings |> List.rev
 
-                    free_var_bindings <- free_var_bindings |> List.rev
+                // формируем окружение
+                let mutable env' = M.Empty()
 
-                    // формируем окружение
-                    let mutable env' = M.Empty()
+                // Добавляем в окружение значения для свободных переменных
+                let free_var_names = fn.free_vars |> List.map fst
 
-                    // Добавляем в окружение значения для свободных переменных
-                    let free_var_names = fn.free_vars |> List.map fst
+                for name, v in (List.zip free_var_names free_var_bindings) do
+                    env' <- env'.Add name v
 
-                    for name, v in (List.zip free_var_names free_var_bindings) do
-                        env' <- env'.Add name v
+                // Добавляем заново наше замыкание, для того, чтобы корректно работала рекурсия
+                env' <- env'.Add label (value_t.Memory fn_mem)
 
-                    // Добавляем заново наше замыкание, для того, чтобы корректно работала рекурсия
-                    env' <- env'.Add func_name (value_t.Memory fn_mem)
+                // Добавляем аргументы
+                let arg_names = fn.args |> List.map fst
 
-                    // Добавляем аргументы
-                    let arg_names = fn.args |> List.map fst
+                for name, v in (List.zip arg_names args) do
+                    let v' = lookup_var v
+                    env' <- env'.Add name v'
 
-                    for name, v in (List.zip arg_names args) do
-                        let v' = lookup_var v
-                        env' <- env'.Add name v'
-
-                    fn.body |> interpret_block top_level_env env'
-                | _ -> failwithf $"toplevel function with label %s{label}  not found"
-            | _ -> failwith "can't call non-closure object"
+                fn.body |> interpret_block top_level_env env'
+            | _ -> failwithf $"toplevel function with label %s{label}  not found"
 
     let f (p: Cmm.program_t) =
         let env = M.Empty()
