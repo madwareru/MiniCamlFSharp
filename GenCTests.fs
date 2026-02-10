@@ -119,13 +119,13 @@ let testGenC () =
     ]
     
     for testName in tests do
-        let c_file_name = Path.Combine("GenCTests", $"{testName}.c")
-        let exe_file_name = Path.Combine("GenCTests", $"{testName}.exe")
-        let output_expected = Path.Combine("GenCTests", $"{testName}_output.txt")
-        let source = Path.Combine("GenCTests", $"{testName}.sexpr")
-        let output_expected = File.ReadAllText(output_expected).Replace("\r\n", "\n")
-        let source = File.ReadAllText(source).Replace("\r\n", "\n")
-    
+        let c_file_path = Path.Combine("GenCTests", $"{testName}.c")
+        let exe_file_path = Path.Combine("GenCTests", $"{testName}.exe")
+        let output_expected_path = Path.Combine("GenCTests", $"{testName}_output.txt")
+        let source_path = Path.Combine("GenCTests", $"{testName}.sexpr")
+        
+        printfn $"compiling {source_path}"
+        let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
         Id.reset ()
         let k_form =
             source
@@ -142,10 +142,18 @@ let testGenC () =
             |> CmmConv.f
             |> CmmDeclosuredConv.f
             |> GenC.f
-            
-        File.WriteAllText(c_file_name, res_text)
         
-        executeShellCommand "cc" [c_file_name; "-o"; exe_file_name] |> ignore
+        printfn $"c generation is complete, writing to {c_file_path}"    
+        File.WriteAllText(c_file_path, res_text)
         
-        let result = executeShellCommand exe_file_name []
+        File.Delete(exe_file_path)
+        printfn $"compiling {c_file_path}"    
+        let compilation_result = executeShellCommand "cc" [c_file_path; "-o"; exe_file_path]
+        printfn $"standard output: {compilation_result.StandardOutput}"
+        printfn $"standard error: {compilation_result.StandardError}"
+        
+        Assert.IsTrue(File.Exists(exe_file_path))
+        
+        let result = executeShellCommand exe_file_path []
+        let output_expected = File.ReadAllText(output_expected_path)
         Assert.AreEqual(output_expected, result.StandardOutput)

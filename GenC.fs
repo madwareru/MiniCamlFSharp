@@ -85,10 +85,12 @@ static v_t min_caml_int_of_float(v_t v)  {
     return res;
 }
 static v_t min_caml_print_int(v_t v) {
-    printf(""%d\n"", v.i);
+    printf(""%lld\n"", v.i);
+    return min_caml_make_unit();
 }
 static v_t min_caml_print_float(v_t v) {
     printf(""%f\n"", v.f);
+    return min_caml_make_unit();
 }
 static v_t min_caml_print_bool(v_t v) {
     if (v.i) {
@@ -96,6 +98,7 @@ static v_t min_caml_print_bool(v_t v) {
     } else {
         printf(""false\n"");
     }
+    return min_caml_make_unit();
 }
 "
 
