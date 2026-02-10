@@ -19,20 +19,48 @@ open mini_caml_fsharp.CmmConv
 open mini_caml_fsharp.CmmDeclosuredConv
 open mini_caml_fsharp.GenC
 
+open System.IO
+open System.Diagnostics
+
+
+type CommandResult =
+    { ExitCode: int
+      StandardOutput: string
+      StandardError: string }
+
+let executeShellCommand exec args =
+    let startInfo = ProcessStartInfo()
+    startInfo.FileName <- exec
+    startInfo.RedirectStandardError <- true
+    startInfo.RedirectStandardOutput <- true
+    startInfo.UseShellExecute <- false
+    startInfo.CreateNoWindow <- true
+    for arg in args do
+        startInfo.ArgumentList.Add(arg)
+    use p = new Process()
+    p.StartInfo <- startInfo
+    p.Start() |> ignore
+    p.WaitForExit()
+    {
+        ExitCode = p.ExitCode
+        StandardOutput = p.StandardOutput.ReadToEnd()
+        StandardError = p.StandardError.ReadToEnd()
+    }
+
 type private test_case = {
     s_expr: string
 }
 
 let private interpretation_tests: test_case list = [
-    // {
-    //     s_expr = @"
-    //         (let-rec (fact x) =
-    //             (if (<= x 1.0)
-    //                 then 1.0
-    //                 else (*. x (fact (-. x 1.0 )))) in
-    //             (let f = fact in (print_int (int_of_float (f 6.0)))))
-    //     "
-    // }
+    {
+        s_expr = @"
+            (let-rec (fact x) =
+                (if (<= x 1.0)
+                    then 1.0
+                    else (*. x (fact (-. x 1.0 )))) in
+                (let f = fact in (print_int (int_of_float (f 6.0)))))
+        "
+    }
     {
         // Императивный факториал
         s_expr = @"
@@ -52,6 +80,16 @@ let private interpretation_tests: test_case list = [
                 (print_int (int_of_float (get[] acc 0))))))
         "
     }
+    {
+        s_expr = @"
+            (let arr = (new[] (, 5 ()) 2) in
+                (;
+                (set[] arr 0 <- (, 15 ()))
+                (print_int (+
+                    (let (, x _) = (get[] arr 0) in x)
+                    (let (, y _) = (get[] arr 1) in y)))))
+        "
+    }
 ]
 
 [<Test>]
@@ -68,17 +106,30 @@ let testGenC () =
             let e' = e' |> ConstFolding.f
             let e' = e' |> Elimination.f
             if e = e' then e' else iter (n - 1) e'
-
-    for case in interpretation_tests do
+    
+    let tests = [
+        "tst1"
+        "tst2"
+        "tst3"
+    ]
+    
+    for testName in tests do
+        let c_file_name = Path.Combine("GenCTests", $"{testName}.c")
+        let exe_file_name = Path.Combine("GenCTests", $"{testName}.exe")
+        let output_expected = Path.Combine("GenCTests", $"{testName}_output.txt")
+        let source = Path.Combine("GenCTests", $"{testName}.sexpr")
+        let output_expected = File.ReadAllText(output_expected).Replace("\r\n", "\n")
+        let source = File.ReadAllText(source).Replace("\r\n", "\n")
+    
         Id.reset ()
         let k_form =
-            case.s_expr
+            source
             |> SExpr.parse
             |> Parsing.f
             |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> AlphaConv.f
-        
+            
         let converted = (limit, k_form) ||> iter
         let res_text =
             converted
@@ -86,5 +137,10 @@ let testGenC () =
             |> CmmConv.f
             |> CmmDeclosuredConv.f
             |> GenC.f
+            
+        File.WriteAllText(c_file_name, res_text)
         
-        printfn $"s_expr: \n%s{case.s_expr} \ngenerated C code: \n%s{res_text}"
+        executeShellCommand "cc" [c_file_name; "-o"; exe_file_name] |> ignore
+        
+        let result = executeShellCommand exe_file_name []
+        Assert.AreEqual(output_expected, result.StandardOutput)

@@ -1,0 +1,14 @@
+(let acc : ([] f) = (new[] 1.0 1) in
+    (let-rec (fact-step x) =
+        (if (;тут-был-вася (<= x 1.0))
+            then ()
+            else
+                (;Внимание!!!!-мутабельность!!!!-аыаыаыа
+                    (let v = (get[] acc 0) in
+                    (let v' = (*. x v) in
+                    (;
+                        (set[] acc 0 <- v')
+                        (fact-step (-. x 1.0))))))) in
+    (;
+        (fact-step 6.0)
+        (print_int (int_of_float (get[] acc 0))))))
