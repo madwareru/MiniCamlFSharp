@@ -183,6 +183,19 @@ let private interpretation_tests: test_case list = [
     }
     {
         s_expr = @"
+            (let arr_1 : ([] i) = (new[] 0 2) in
+            (let arr_2 = (clone! arr_1) in
+                (;
+                (set[] arr_2 0 <- 10)
+                (set[] arr_2 1 <- 20)
+                (+
+                    (get[] arr_1 0)
+                    (get[] arr_1 1)))))
+        "
+        expected_res = InterpreterShared.Int 0
+    }
+    {
+        s_expr = @"
             (let arr = (new[] (, 5 ()) 2) in
                 (;
                 (set[] arr 0 <- (, 15 ()))

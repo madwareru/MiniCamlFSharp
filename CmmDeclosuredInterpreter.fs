@@ -14,6 +14,11 @@ module CmmDeclosuredInterpreter =
         | Int of int64
         | Float of double
         | Memory of value_t array
+        
+    let rec clone (v : value_t) =
+        match v with
+        | Memory mem ->Memory (mem |> Array.map clone)
+        | _ -> v 
 
     let rec private cmp_values cmp l r =
         match l, r with
@@ -144,6 +149,9 @@ module CmmDeclosuredInterpreter =
                     let v = lookup_var v
                     let mem = Array.create (int count) v
                     value_t.Memory mem
+                | "min_caml_clone", [v] ->
+                    let v = lookup_var v
+                    clone v
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"
 
     let f (p: CmmDeclosured.program_t) =

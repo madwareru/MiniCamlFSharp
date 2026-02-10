@@ -144,6 +144,11 @@ module KNormalisation =
 
                     bind [] exs)
             | _ -> failwith "failed to k-normalize function application"
+        
+        // Клонирование делегируется вызову внешней функции    
+        | Syntax.CloneNode e ->
+            let _, e_t as g_e = normalize env e
+            g_e |> insert_let (fun e' -> KNorm.ExtFunApply("clone", [e']), e_t)
 
         // Создание массива делегируется вызову внешней функции
         | Syntax.ArrayNode(v_e, count_e) ->

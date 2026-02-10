@@ -67,6 +67,10 @@ let private parsing_tests: test_case list = [
         expected_syntax = Syntax.BoolNode true
     }
     {
+        s_expr = "(clone! (, 1 2 3))"
+        expected_syntax = Syntax.CloneNode(Syntax.TupleNode [Syntax.IntNode 1; Syntax.IntNode 2; Syntax.IntNode 3])
+    }
+    {
         s_expr = "(- 1)"
         expected_syntax = Syntax.IntNode -1
     }

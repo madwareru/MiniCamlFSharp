@@ -57,6 +57,10 @@ module Parsing =
         | SExpr.SExprBool b -> Syntax.BoolNode b
         | SExpr.SExprInt i -> Syntax.IntNode i
         | SExpr.SExprFloat f -> Syntax.FloatNode f
+        | SExpr.SExprList(SExpr.SExprId [ 'c'; 'l'; 'o'; 'n'; 'e'; '!' ] :: exs) ->
+            match exs with
+            | [ e ] -> Syntax.CloneNode <| p_expr e
+            | _ -> fail_form "clone!" exs
         | SExpr.SExprList(SExpr.SExprId [ 'n'; 'o'; 't' ] :: exs) ->
             match exs with
             | [ SExpr.SExprBool b ] -> Syntax.BoolNode <| not b

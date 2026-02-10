@@ -45,6 +45,14 @@ let private typing_tests: test_case list = [
         )
     }
     {
+        s_expr = "(let x : (, i _) = (clone! (, 1 #t)) in x)"
+        expected_syntax = Syntax.LetNode(
+            ("x", Type.TupleType [Type.IntType; Type.BoolType]),
+            Syntax.CloneNode(Syntax.TupleNode([ Syntax.IntNode 1; Syntax.BoolNode true ])),
+            Syntax.VarNode "x"
+        )
+    }
+    {
         s_expr = "(let (, x y z) = (, 1 #t 42) in (if y then x else z))"
         expected_syntax = Syntax.LetTuple(
             [

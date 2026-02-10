@@ -188,6 +188,8 @@ module Typing =
             | BoolNode _ -> Type.BoolType
             | IntNode _ -> Type.IntType
             | FloatNode _ -> Type.FloatType
+            
+            | CloneNode e -> e |> infer env
 
             // В случае унарных операций выводим сначала тип аргумента,
             // унифицируется с типом, который ожидается  в операции,
@@ -350,6 +352,7 @@ module Typing =
         extenv.Value <- extenv.Value.Add "float_of_int" (Type.FunType([Type.IntType], Type.FloatType))
         extenv.Value <- extenv.Value.Add "print_int" (Type.FunType([Type.IntType], Type.UnitType))
         extenv.Value <- extenv.Value.Add "print_float" (Type.FunType([Type.IntType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_bool" (Type.FunType([Type.BoolType], Type.UnitType))
         let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
         match typing_rule, deref_typ expr_type with

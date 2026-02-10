@@ -90,6 +90,13 @@ static v_t min_caml_print_int(v_t v) {
 static v_t min_caml_print_float(v_t v) {
     printf(""%f\n"", v.f);
 }
+static v_t min_caml_print_bool(v_t v) {
+    if (v.i) {
+        printf(""true\n"");
+    } else {
+        printf(""false\n"");
+    }
+}
 "
 
     let private std_epilogue =
@@ -187,11 +194,11 @@ static v_t min_caml_print_float(v_t v) {
                     let cont' = (fun (indent, s) -> text <- text + $"%s{indent}/*%s{id}*/ %s{id'} = %s{s};\n")
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'};\n"
-                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{ \n"
+                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont'
-                    text <- text + $"%s{indentation}}} else {{ \n"
+                    text <- text + $"%s{indentation}}} else {{\n"
                     (indentation', else_block) ||> print_block ls ids id_ts cont'
-                    text <- text + $"%s{indentation}}} \n"
+                    text <- text + $"%s{indentation}}}\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.BranchLE(a, b, then_block, else_block) ->
                     let a', a_t = find_id a
@@ -205,11 +212,11 @@ static v_t min_caml_print_float(v_t v) {
                     let cont' = (fun (indent, s) -> text <- text + $"%s{indent}/*%s{id}*/ %s{id'} = %s{s};\n")
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'};\n"
-                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{ \n"
+                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont'
-                    text <- text + $"%s{indentation}}} else {{ \n"
+                    text <- text + $"%s{indentation}}} else {{\n"
                     (indentation', else_block) ||> print_block ls ids id_ts cont'
-                    text <- text + $"%s{indentation}}} \n"
+                    text <- text + $"%s{indentation}}}\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.Atom(CmmDeclosured.Unit) ->
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_unit();\n"
@@ -298,11 +305,11 @@ static v_t min_caml_print_float(v_t v) {
                         | Type.FloatType -> $"%s{a'}.f == %s{b'}.f"
                         | _ -> failwith "todo: support structural comparison"
                     let indentation' = "    " + indentation
-                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{ \n"
+                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont
-                    text <- text + $"%s{indentation}}} else {{ \n"
+                    text <- text + $"%s{indentation}}} else {{\n"
                     (indentation', else_block) ||> print_block ls ids id_ts cont
-                    text <- text + $"%s{indentation}}} \n"
+                    text <- text + $"%s{indentation}}}\n"
                 | CmmDeclosured.BranchLE(a, b, then_block, else_block) ->
                     let a', a_t = find_id a
                     let b', _ = find_id b
@@ -313,11 +320,11 @@ static v_t min_caml_print_float(v_t v) {
                         | Type.FloatType -> $"%s{a'}.f <= %s{b'}.f"
                         | _ -> failwith "todo: support structural comparison"
                     let indentation' = "    " + indentation
-                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{ \n"
+                    text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont
-                    text <- text + $"%s{indentation}}} else {{ \n"
+                    text <- text + $"%s{indentation}}} else {{\n"
                     (indentation', else_block) ||> print_block ls ids id_ts cont
-                    text <- text + $"%s{indentation}}} \n"
+                    text <- text + $"%s{indentation}}}\n"
                 | CmmDeclosured.Atom(CmmDeclosured.Unit) -> cont(indentation, "min_caml_make_unit()")
                 | CmmDeclosured.Atom(CmmDeclosured.Int i) -> cont(indentation, $"min_caml_make_int({i})")
                 | CmmDeclosured.Atom(CmmDeclosured.Float f) -> cont(indentation, $"min_caml_make_float({f})")
@@ -376,7 +383,7 @@ static v_t min_caml_print_float(v_t v) {
                             arg_list_str <- $"%s{arg_list_str}, %s{x_next}"
                         cont(indentation, $"%s{l'}(%s{arg_list_str})")
         
-        let print_fn (ls : Id.t M) (ids : Id.t M) (id_ts : Type.t M) (fn : CmmDeclosured.fn_t) =
+        let print_fn_general fdecl (ls : Id.t M) (ids : Id.t M) (id_ts : Type.t M) (fn : CmmDeclosured.fn_t) =
             let find_id id =
                 match ids.TryFind id with
                 | Some id -> id
@@ -394,19 +401,27 @@ static v_t min_caml_print_float(v_t v) {
                     let mutable arg_list_str = $"v_t {x}"
                     for x_next in xs do
                         arg_list_str <- $"%s{arg_list_str}, v_t %s{x_next}"
-                    text <- text + $"v_t /*%s{l}*/ %s{l'}(%s{arg_list_str}) {{ \n"
-                    ("    ", fn.body)
-                    ||> print_block ls ids id_ts (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
-                    text <- text + "} \n"
+                    if fdecl then
+                        text <- text + $"v_t /*%s{l}*/ %s{l'}(%s{arg_list_str});\n"
+                    else
+                        text <- text + $"v_t /*%s{l}*/ %s{l'}(%s{arg_list_str}) {{\n"
+                        ("    ", fn.body)
+                        ||> print_block ls ids id_ts (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
+                        text <- text + "}\n"
+        let print_fn = print_fn_general false
+        let print_fn_forward_decl = print_fn_general true
         
         let ls, ids, id_ts = gen_c_compliant_idents p
         
         for fn in p.top_level_functions do
+            fn |> print_fn_forward_decl ls ids id_ts
+        
+        for fn in p.top_level_functions do
             fn |> print_fn ls ids id_ts
             
-        text <- text + "static v_t min_caml_entry_point(void) { \n"
+        text <- text + "static v_t min_caml_entry_point(void) {\n"
         ("    ", p.entry) ||> print_block ls ids id_ts (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
-        text <- text + "} \n"
+        text <- text + "}\n"
         
         text <- text + std_epilogue
         

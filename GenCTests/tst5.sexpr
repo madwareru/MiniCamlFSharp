@@ -1,0 +1,9 @@
+(let-rec (fib x) : (i) -> i =
+  (let-rec (fib-tail x-2 x-1 x) : (i i i) -> i =
+    (if (<= x 1)
+      then x-1
+      else
+        (let (, x-2 x-1 x) = (, x-1 (+ x-2 x-1) (- x 1))
+        in (fib-tail x-2 x-1 x)))
+    in (fib-tail 1 1 x))
+  in (print_int (fib 6)))

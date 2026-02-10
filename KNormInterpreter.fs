@@ -1,5 +1,6 @@
 module mini_caml_fsharp.KNormInterpreter
 
+open System
 open mini_caml_fsharp.KNorm
 open mini_caml_fsharp.M
 open mini_caml_fsharp.InterpreterShared
@@ -128,6 +129,9 @@ module KNormInterpreter =
                 let v = lookup_var v
                 let arr = Array.create (int count) v
                 value_t.Array arr
+            | "clone", [v] ->
+                let v = lookup_var v
+                InterpreterShared.clone v
             | _ -> failwith "unknown external function"
 
     let f e = interpret (M.Empty()) e

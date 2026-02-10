@@ -111,6 +111,11 @@ let testGenC () =
         "tst1"
         "tst2"
         "tst3"
+        "tst4"
+        "tst5"
+        "tst6"
+        "tst7"
+        "tst8"
     ]
     
     for testName in tests do

@@ -13,6 +13,8 @@ module Syntax =
         | IntNode of int64
         /// $double-literal
         | FloatNode of double
+        /// (clone! expr)
+        | CloneNode of t
         /// (not $expr), где $expr: boolean
         | NotNode of t
         /// (- $expr), где $expr: int
