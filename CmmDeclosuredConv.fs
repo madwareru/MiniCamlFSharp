@@ -46,8 +46,9 @@ module CmmDeclosuredConv =
             }
         else
             let free_vars_ts = fn.args |> List.map snd
+            let Id.L closure_id, _ = fn.name
+            
             let closure_t = Type.TupleType <| free_vars_ts
-            let closure_id = Id.gen_tmp closure_t
             
             let args' = (closure_id, closure_t) :: fn.args
             

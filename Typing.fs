@@ -346,6 +346,10 @@ module Typing =
 
     let f (typing_rule : program_output_typing_rule) e =
         extenv.Value <- M.Empty()
+        extenv.Value <- extenv.Value.Add "int_of_float" (Type.FunType([Type.FloatType], Type.IntType))
+        extenv.Value <- extenv.Value.Add "float_of_int" (Type.FunType([Type.IntType], Type.FloatType))
+        extenv.Value <- extenv.Value.Add "print_int" (Type.FunType([Type.IntType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_float" (Type.FunType([Type.IntType], Type.UnitType))
         let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
         match typing_rule, deref_typ expr_type with
