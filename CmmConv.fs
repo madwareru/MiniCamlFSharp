@@ -31,7 +31,6 @@ module CmmConv =
         | ClosureRepresentation.FDiv(lhs, rhs) -> Return <| FDiv(lhs, rhs)
 
         // Операции над памятью:
-        | ClosureRepresentation.ExtArray arr_name -> Return <| ExternalMemory arr_name
         | ClosureRepresentation.Get(name, ix) -> Return <| MemoryGet(name, ix)
         | ClosureRepresentation.Put(name, ix, v) -> Return <| MemoryPut(name, ix, v)
 

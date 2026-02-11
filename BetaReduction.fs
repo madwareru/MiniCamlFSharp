@@ -35,7 +35,6 @@ module BetaReduction =
         | KNorm.FDiv(l, r) -> KNorm.FDiv(find l, find r)
         | KNorm.Get(a, i) -> KNorm.Get(find a, find i)
         | KNorm.Put(a, i, v) -> KNorm.Put(find a, find i, find v)
-        | KNorm.ExtArray id -> KNorm.ExtArray(find id)
         | KNorm.Apply(callee, args) -> KNorm.Apply(find callee, args |> List.map find)
         | KNorm.ExtFunApply(callee, args) -> KNorm.ExtFunApply(find callee, args |> List.map find)
         | KNorm.BranchEq(l, r, e1, e2) -> KNorm.BranchEq(find l, find r, e1 |> beta_reduce env, e2 |> beta_reduce env)

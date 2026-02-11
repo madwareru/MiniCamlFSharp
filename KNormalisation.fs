@@ -102,10 +102,7 @@ module KNormalisation =
         | Syntax.VarNode name ->
             match env.TryFind name with
             | Some t -> KNorm.Var name, t
-            | _ ->
-                match Typing.extenv.Value.TryFind name with
-                | Some(Type.ArrayType _ as t) -> KNorm.ExtArray name, t
-                | _ -> failwithf $"external variable %s{name} does not have an array type"
+            | _ -> failwithf $"variable with a name %s{name} does not found"
 
         | Syntax.TupleNode exs ->
             let rec bind ids ts =

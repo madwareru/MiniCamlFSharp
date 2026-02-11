@@ -90,7 +90,6 @@ module Cmm =
         // Операции над массивами, кортежами и замыканиями
         | MemoryGet of Id.t * Id.t
         | MemoryPut of Id.t * Id.t * Id.t
-        | ExternalMemory of Id.l
 
         // Прямой вызов функции по метке из toplevel
         | ApplyDirect of Id.l * Id.t list

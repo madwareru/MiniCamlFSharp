@@ -52,7 +52,6 @@ module KNormInterpreter =
         | KNorm.FDiv(lhs, rhs) -> value_t.Float(lookup_f lhs / lookup_f rhs)
 
         // Операции над массивами:
-        | KNorm.ExtArray _ -> failwith "todo: ext array"
         | KNorm.Get(arr_name, ix) ->
             let arr = lookup_arr arr_name
             let ix = lookup_i ix

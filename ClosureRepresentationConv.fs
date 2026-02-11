@@ -48,7 +48,6 @@ module ClosureRepresentationConv =
         | KNorm.Get(x, ix) -> ClosureRepresentation.Get(x, ix), toplevel
         | KNorm.Put(x, ix, v) -> ClosureRepresentation.Put(x, ix, v), toplevel
 
-        | KNorm.ExtArray x -> ClosureRepresentation.ExtArray(Id.L x), toplevel
         // Преобразуем имя внешней функции к виду с префиксом
         | KNorm.ExtFunApply(x, ys) ->
             let x' = "min_caml_" + x |> Id.L

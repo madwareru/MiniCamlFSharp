@@ -96,7 +96,6 @@ module CmmInterpreter =
         | Cmm.FDiv(lhs, rhs) -> value_t.Float(lookup_f lhs / lookup_f rhs)
 
         // Операции над памятью
-        | Cmm.ExternalMemory _ -> failwith "todo: external memory"
         | Cmm.MemoryGet(mem_name, ix) ->
             let mem = lookup_mem mem_name
             let ix = lookup_i ix

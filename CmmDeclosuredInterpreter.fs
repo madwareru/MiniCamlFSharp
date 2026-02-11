@@ -97,7 +97,6 @@ module CmmDeclosuredInterpreter =
         | CmmDeclosured.FDiv(lhs, rhs) -> value_t.Float(lookup_f lhs / lookup_f rhs)
 
         // Операции над памятью
-        | CmmDeclosured.ExternalMemory _ -> failwith "todo: external memory"
         | CmmDeclosured.MemoryGet(mem_name, ix) ->
             let mem = lookup_mem mem_name
             let ix = lookup_i ix

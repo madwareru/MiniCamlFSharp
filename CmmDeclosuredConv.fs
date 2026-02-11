@@ -28,7 +28,6 @@ module CmmDeclosuredConv =
         | Cmm.FDiv(l, r) -> CmmDeclosured.FDiv(l, r)
         | Cmm.MemoryGet(mem, ix) -> CmmDeclosured.MemoryGet(mem, ix)
         | Cmm.MemoryPut(mem, ix, v) -> CmmDeclosured.MemoryPut(mem, ix, v)
-        | Cmm.ExternalMemory x -> CmmDeclosured.ExternalMemory x
         | Cmm.BranchEq(a, b, then_block, else_block) ->
             CmmDeclosured.BranchEq(a, b, then_block |> convert_block, else_block |> convert_block)
         | Cmm.BranchLE(a, b, then_block, else_block) ->

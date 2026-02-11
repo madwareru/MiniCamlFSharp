@@ -230,8 +230,7 @@ static v_t min_caml_print_bool(v_t v) {
                 | CmmDeclosured.Atom(CmmDeclosured.Float f) ->
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_float({f});\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
-                | CmmDeclosured.Var v
-                | CmmDeclosured.ExternalMemory(Id.L v ) ->
+                | CmmDeclosured.Var v ->
                     let v', _ = find_id v
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = %s{v'};\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
@@ -331,8 +330,7 @@ static v_t min_caml_print_bool(v_t v) {
                 | CmmDeclosured.Atom(CmmDeclosured.Unit) -> cont(indentation, "min_caml_make_unit()")
                 | CmmDeclosured.Atom(CmmDeclosured.Int i) -> cont(indentation, $"min_caml_make_int({i})")
                 | CmmDeclosured.Atom(CmmDeclosured.Float f) -> cont(indentation, $"min_caml_make_float({f})")
-                | CmmDeclosured.Var v
-                | CmmDeclosured.ExternalMemory(Id.L v ) -> 
+                | CmmDeclosured.Var v -> 
                     let v', _ = find_id v
                     cont(indentation, v')
                 | CmmDeclosured.Neg v ->

@@ -49,7 +49,6 @@ module ClosureRepresentationInterpreter =
         | ClosureRepresentation.FDiv(lhs, rhs) -> value_t.Float(lookup_f lhs / lookup_f rhs)
 
         // Операции над массивами:
-        | ClosureRepresentation.ExtArray _ -> failwith "todo: ext array"
         | ClosureRepresentation.Get(arr_name, ix) ->
             let arr = lookup_arr arr_name
             let ix = lookup_i ix

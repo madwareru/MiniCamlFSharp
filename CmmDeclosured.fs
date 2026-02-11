@@ -51,7 +51,6 @@ module CmmDeclosured =
         // Операции над массивами, кортежами и замыканиями
         | MemoryGet of Id.t * Id.t
         | MemoryPut of Id.t * Id.t * Id.t
-        | ExternalMemory of Id.l
 
         // Прямой вызов функции по метке из toplevel
         | Apply of Id.l * Id.t list

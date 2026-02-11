@@ -33,7 +33,6 @@ module KNorm =
         // Операции над массивами
         | Get of Id.t * Id.t
         | Put of Id.t * Id.t * Id.t
-        | ExtArray of Id.t
 
         // Операции над функциями
         | Apply of Id.t * Id.t list
@@ -60,8 +59,7 @@ module KNorm =
         match e with
         | t.Unit
         | t.Int _
-        | t.Float _
-        | t.ExtArray _ -> S.Empty()
+        | t.Float _ -> S.Empty()
 
         | t.Neg x
         | t.FNeg x
