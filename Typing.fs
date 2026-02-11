@@ -338,11 +338,7 @@ module Typing =
                 | _ ->
                     match extenv.Value.TryFind name with
                     | Some t -> t
-                    | _ ->
-                        eprintf $"free variable %s{name} assumed as external@."
-                        let t = Type.gen_empty ()
-                        extenv.Value <- extenv.Value.Add name t
-                        t
+                    | _ -> failwith $"variable %s{name} not found."
         with UnifyException(t1, t2) ->
             raise (TypingException { expr = e; lhs = t1; rhs = t2 })
 
@@ -357,6 +353,7 @@ module Typing =
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
         match typing_rule, deref_typ expr_type with
         | ProgramShouldReturnUnit, Type.UnitType -> deref_term e
+        | ProgramShouldReturnUnit, _ -> failwith "program should return unit!"
         | ProgramShouldNotReturnFunction, Type.FunType _ ->
             failwith "programs with a return type of a function is not supported"
         | _ -> deref_term e

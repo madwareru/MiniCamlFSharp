@@ -131,7 +131,7 @@ let testGenC () =
             source
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f Typing.ProgramShouldNotReturnFunction
+            |> Typing.f Typing.ProgramShouldReturnUnit
             |> KNormalisation.f
             |> AlphaConv.f
             
