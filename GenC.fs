@@ -10,26 +10,34 @@ module GenC =
         @"#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+typedef enum min_caml_tag { UNIT_TAG, INT_TAG, FLOAT_TAG, MEMORY_TAG } tag_t;
 typedef enum min_caml_unit { UNIT } u_t;
+
+struct min_caml_value;
+typedef struct min_caml_memory {
+    struct min_caml_value * v;
+    int64_t length;
+} mem_t;
+
 typedef struct min_caml_value {
+    tag_t tag;
     union {
         u_t u;
         int64_t i;
         double f;
-        struct min_caml_value * v;
+        mem_t m;
     };
-    int64_t extra;
 } v_t;
 static v_t min_caml_make_unit() { 
-    v_t res = { .extra = 0, .u = UNIT }; 
+    v_t res = { .tag = UNIT_TAG, .u = UNIT }; 
     return res;
 } 
 static v_t min_caml_make_int(int i) { 
-    v_t res = { .extra = 0, .i = i }; 
+    v_t res = { .tag = INT_TAG, .i = i }; 
     return res;
 } 
 static v_t min_caml_make_float(double f) { 
-    v_t res = { .extra = 0, .f = f }; 
+    v_t res = { .tag = FLOAT_TAG, .f = f }; 
     return res;
 }
 static v_t min_caml_alloc_vector(v_t count) {
@@ -45,34 +53,36 @@ static v_t min_caml_alloc_vector(v_t count) {
     }
 
     v_t v = min_caml_make_unit();
-    v_t res = { .extra = count.i, .v = res_v };
+    mem_t mem = { .length = count.i, .v = res_v };
+    v_t res = { .tag = MEMORY_TAG, .m = mem };
     for(int64_t i = 0; i < count.i; i++) {
-        res.v[i] = v;
+        res.m.v[i] = v;
     }
     return res;
 }
 static v_t min_caml_clone(v_t v) {
-    if (!v.extra)
+    if (v.tag != MEMORY_TAG)
         return v;
 
-    v_t count = min_caml_make_int(v.extra);
+    v_t count = min_caml_make_int(v.m.length);
     v_t res = min_caml_alloc_vector(count);
-    for(int64_t i = 0; i < v.extra; i++) {
-        res.v[i] = min_caml_clone(v.v[i]);
+    for(int64_t i = 0; i < v.m.length; i++) {
+        res.m.v[i] = min_caml_clone(v.m.v[i]);
     }
     return res;
 }
 static v_t min_caml_create_array(v_t count, v_t v) {
     v_t res = min_caml_alloc_vector(count);
     for(int64_t i = 0; i < count.i; i++) {
-        res.v[i] = min_caml_clone(v);
+        res.m.v[i] = min_caml_clone(v);
     }
     return res;
 }
 static v_t min_caml_create_float_array(v_t count, v_t v) {
     v_t res = min_caml_alloc_vector(count);
     for(int64_t i = 0; i < count.i; i++) {
-        res.v[i].f = v.f;
+        res.m.v[i].tag = FLOAT_TAG;
+        res.m.v[i].f = v.f;
     }
     return res;
 }
@@ -99,6 +109,40 @@ static v_t min_caml_print_bool(v_t v) {
         printf(""false\n"");
     }
     return min_caml_make_unit();
+}
+static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
+    switch(lhs.tag) {
+        case UNIT_TAG:
+            return min_caml_make_int(1);
+        case INT_TAG:
+            return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
+        case FLOAT_TAG:
+            return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
+        default: 
+            for(int64_t i = 0; i < lhs.m.length; i++) {
+                v_t r = min_caml_less_eq(lhs.m.v[i], rhs.m.v[i]);
+                if (!r.i)
+                    return r;
+            }
+            return min_caml_make_int(1);
+    }
+}
+static v_t min_caml_eq(v_t lhs, v_t rhs) {
+    switch(lhs.tag) {
+        case UNIT_TAG:
+            return min_caml_make_int(1);
+        case INT_TAG:
+            return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
+        case FLOAT_TAG:
+            return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
+        default: 
+            for(int64_t i = 0; i < lhs.m.length; i++) {
+                v_t r = min_caml_eq(lhs.m.v[i], rhs.m.v[i]);
+                if (!r.i)
+                    return r;
+            }
+            return min_caml_make_int(1);
+    }
 }
 "
 
@@ -193,7 +237,7 @@ static v_t min_caml_print_bool(v_t v) {
                         | Type.UnitType -> "true"
                         | Type.IntType ->  $"%s{a'}.i == %s{b'}.i"
                         | Type.FloatType -> $"%s{a'}.f == %s{b'}.f"
-                        | _ -> failwith "todo: support structural comparison"
+                        | _ -> $"min_caml_eq(%s{a'}, %s{b'})"
                     let cont' = (fun (indent, s) -> text <- text + $"%s{indent}/*%s{id}*/ %s{id'} = %s{s};\n")
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'};\n"
@@ -211,7 +255,7 @@ static v_t min_caml_print_bool(v_t v) {
                         | Type.UnitType -> "true"
                         | Type.IntType ->  $"%s{a'}.i <= %s{b'}.i"
                         | Type.FloatType -> $"%s{a'}.f <= %s{b'}.f"
-                        | _ -> failwith "todo: support structural comparison"
+                        | _ -> $"min_caml_less_eq(%s{a'}, %s{b'})"
                     let cont' = (fun (indent, s) -> text <- text + $"%s{indent}/*%s{id}*/ %s{id'} = %s{s};\n")
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'};\n"
@@ -275,13 +319,13 @@ static v_t min_caml_print_bool(v_t v) {
                 | CmmDeclosured.MemoryGet(mem, ix) ->
                     let mem', _ = find_id mem
                     let ix', _ = find_id ix
-                    text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = %s{mem'}.v[%s{ix'}.i];\n"
+                    text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = %s{mem'}.m.v[%s{ix'}.i];\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.MemoryPut(mem, ix, v) ->
                     let mem', _ = find_id mem
                     let ix', _ = find_id ix
                     let v', _ = find_id v
-                    text <- text + $"%s{indentation}%s{mem'}.v[%s{ix'}.i] = %s{v'};\n"
+                    text <- text + $"%s{indentation}%s{mem'}.m.v[%s{ix'}.i] = %s{v'};\n"
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_unit();\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.Apply(Id.L l, vs) ->
@@ -305,7 +349,7 @@ static v_t min_caml_print_bool(v_t v) {
                         | Type.UnitType -> "true"
                         | Type.IntType ->  $"%s{a'}.i == %s{b'}.i"
                         | Type.FloatType -> $"%s{a'}.f == %s{b'}.f"
-                        | _ -> failwith "todo: support structural comparison"
+                        | _ -> $"min_caml_eq(%s{a'}, %s{b'})"
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont
@@ -320,7 +364,7 @@ static v_t min_caml_print_bool(v_t v) {
                         | Type.UnitType -> "true"
                         | Type.IntType ->  $"%s{a'}.i <= %s{b'}.i"
                         | Type.FloatType -> $"%s{a'}.f <= %s{b'}.f"
-                        | _ -> failwith "todo: support structural comparison"
+                        | _ -> $"min_caml_less_eq(%s{a'}, %s{b'})"
                     let indentation' = "    " + indentation
                     text <- text + $"%s{indentation}if (%s{comparison_text}) {{\n"
                     (indentation', then_block) ||> print_block ls ids id_ts cont
@@ -366,12 +410,12 @@ static v_t min_caml_print_bool(v_t v) {
                 | CmmDeclosured.MemoryGet(mem, ix) ->
                     let mem', _ = find_id mem
                     let ix', _ = find_id ix
-                    cont(indentation, $"%s{mem'}.v[%s{ix'}.i]")
+                    cont(indentation, $"%s{mem'}.m.v[%s{ix'}.i]")
                 | CmmDeclosured.MemoryPut(mem, ix, v) ->
                     let mem', _ = find_id mem
                     let ix', _ = find_id ix
                     let v', _ = find_id v
-                    text <- text + $"%s{indentation}%s{mem'}.v[%s{ix'}.i] = %s{v'};\n"
+                    text <- text + $"%s{indentation}%s{mem'}.m.v[%s{ix'}.i] = %s{v'};\n"
                     cont(indentation, "min_caml_make_unit()")
                 | CmmDeclosured.Apply(Id.L l, vs) ->
                     let vs' = vs |> List.map find_id |> List.map fst
