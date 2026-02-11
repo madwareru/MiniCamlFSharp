@@ -1,4 +1,7 @@
 (let-rec (one-or-less? n) = (<= n 1.0) in
 (let-rec (pred n) = (-. n 1.0) in
-(let-rec (factorial n) = (if (one-or-less? n) then 1.0 else (*. n (factorial (pred n)))) in
+(let-rec (factorial n) =
+  (if (one-or-less? n)
+    then 1.0
+    else (*. n (factorial (pred n)))) in
 (print_int (int_of_float (factorial 10.0))))))
