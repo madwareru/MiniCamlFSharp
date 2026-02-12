@@ -1,2 +1,2 @@
 (let x = (<= 5 10) in 
-(print_bool x))
+(print_bool_ln x))

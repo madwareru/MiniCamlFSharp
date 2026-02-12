@@ -3,4 +3,4 @@
     then 1.0
     else (*. x (fact (-. x 1.0 )))) in
 (let f = fact in 
-(print_int (int_of_float (f 6.0)))))
+(print_int_ln (int_of_float (f 6.0)))))

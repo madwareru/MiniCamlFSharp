@@ -1,0 +1,7 @@
+(let-rec (dec x) = (-. x 1.0) in
+(let-rec (tak x y z) =
+  (if (>= y x) 
+    then z
+    else (tak (tak (dec x) y z) (tak (dec y) z x) (tak (dec z) x y))) in
+(let n = 10.0 in
+(print_int_ln (int_of_float (*. 1000000.0 (tak (*. n 3.0) (*. n 2.0) (*. n 1.0))))))))

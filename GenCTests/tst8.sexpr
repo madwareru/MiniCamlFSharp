@@ -3,6 +3,6 @@
   (;
     (set[] arr_2 0 <- 10)
     (set[] arr_2 1 <- 20)
-    (print_int (+
+    (print_int_ln (+
       (get[] arr_1 0)
       (get[] arr_1 1))))))

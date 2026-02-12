@@ -347,8 +347,12 @@ module Typing =
         extenv.Value <- extenv.Value.Add "int_of_float" (Type.FunType([Type.FloatType], Type.IntType))
         extenv.Value <- extenv.Value.Add "float_of_int" (Type.FunType([Type.IntType], Type.FloatType))
         extenv.Value <- extenv.Value.Add "print_int" (Type.FunType([Type.IntType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_int_ln" (Type.FunType([Type.IntType], Type.UnitType))
         extenv.Value <- extenv.Value.Add "print_float" (Type.FunType([Type.IntType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_float_ln" (Type.FunType([Type.FloatType], Type.UnitType))
         extenv.Value <- extenv.Value.Add "print_bool" (Type.FunType([Type.BoolType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_bool_ln" (Type.FunType([Type.BoolType], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_ln" (Type.FunType([Type.UnitType], Type.UnitType))
         let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
         match typing_rule, deref_typ expr_type with

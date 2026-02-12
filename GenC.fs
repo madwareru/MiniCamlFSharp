@@ -95,19 +95,39 @@ static v_t min_caml_int_of_float(v_t v)  {
     return res;
 }
 static v_t min_caml_print_int(v_t v) {
+    printf(""%lld"", v.i);
+    return min_caml_make_unit();
+}
+static v_t min_caml_print_int_ln(v_t v) {
     printf(""%lld\n"", v.i);
     return min_caml_make_unit();
 }
 static v_t min_caml_print_float(v_t v) {
+    printf(""%f"", v.f);
+    return min_caml_make_unit();
+}
+static v_t min_caml_print_float_ln(v_t v) {
     printf(""%f\n"", v.f);
     return min_caml_make_unit();
 }
 static v_t min_caml_print_bool(v_t v) {
     if (v.i) {
+        printf(""true"");
+    } else {
+        printf(""false"");
+    }
+    return min_caml_make_unit();
+}
+static v_t min_caml_print_bool_ln(v_t v) {
+    if (v.i) {
         printf(""true\n"");
     } else {
         printf(""false\n"");
     }
+    return min_caml_make_unit();
+}
+static v_t min_caml_print_ln(v_t v_unused) {
+    printf(""\n"");
     return min_caml_make_unit();
 }
 static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
@@ -272,7 +292,7 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                     text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_int({i});\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.Atom(CmmDeclosured.Float f) ->
-                    text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_float({f});\n"
+                    text <- text + $"%s{indentation}v_t /*%s{id}*/ %s{id'} = min_caml_make_float(%f{f});\n"
                     (indentation, next_block) ||> print_block ls ids id_ts cont
                 | CmmDeclosured.Var v ->
                     let v', _ = find_id v
@@ -373,7 +393,7 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                     text <- text + $"%s{indentation}}}\n"
                 | CmmDeclosured.Atom(CmmDeclosured.Unit) -> cont(indentation, "min_caml_make_unit()")
                 | CmmDeclosured.Atom(CmmDeclosured.Int i) -> cont(indentation, $"min_caml_make_int({i})")
-                | CmmDeclosured.Atom(CmmDeclosured.Float f) -> cont(indentation, $"min_caml_make_float({f})")
+                | CmmDeclosured.Atom(CmmDeclosured.Float f) -> cont(indentation, $"min_caml_make_float(%f{f})")
                 | CmmDeclosured.Var v -> 
                     let v', _ = find_id v
                     cont(indentation, v')

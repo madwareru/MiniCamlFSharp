@@ -11,4 +11,5 @@
         (fact-step (-. x 1.0))))))) in
 (;
   (fact-step 6.0)
-  (print_int (int_of_float (get[] acc 0))))))
+  (print_int (int_of_float (get[] acc 0)))
+  (print_ln ()))))

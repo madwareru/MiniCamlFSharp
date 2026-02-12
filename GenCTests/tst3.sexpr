@@ -4,4 +4,5 @@
   (print_int 
     (+
       (let (, x _) = (get[] arr 0) in x)
-      (let (, y _) = (get[] arr 1) in y)))))
+      (let (, y _) = (get[] arr 1) in y)))
+  (print_ln ())))

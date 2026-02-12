@@ -6,4 +6,4 @@
       (let (, x-2 x-1 x) = (, x-1 (+ x-2 x-1) (- x 1)) in 
         (fib-tail x-2 x-1 x))) in 
   (fib-tail 1 1 x)) in 
-(print_int (fib 6)))
+(print_int_ln (fib 6)))
