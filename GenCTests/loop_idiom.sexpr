@@ -1,4 +1,4 @@
-(let-rec (do-loop start end iter-action) : (i i (fn (i) -> u)) -> u = 
+(let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ = 
   (if (<= start end) 
     then (; (iter-action start) (do-loop (+ start 1) end iter-action))
     else ()) in 

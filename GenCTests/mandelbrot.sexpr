@@ -1,6 +1,6 @@
 (let-rec (dbl x) = (+. x x) in
 (let-rec (yloop y) =
-  (if (>= y 80) then (print_ln ())
+  (if (>= y 80) then ()
     else 
     (let-rec (xloop x y) = 
       (if (>= x 80) then (print_ln ()) 

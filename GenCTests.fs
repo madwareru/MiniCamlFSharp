@@ -117,6 +117,7 @@ let testGenC () =
         "tst8"
         "tak"
         "mandelbrot"
+        "mandelbrot2"
         "loop_idiom"
     ]
     
