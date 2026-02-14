@@ -1,6 +1,5 @@
 module mini_caml_fsharp.GenCTests
 
-
 open Microsoft.FSharp.Core
 open NUnit.Framework
 open mini_caml_fsharp.SExpr
@@ -45,51 +44,6 @@ let executeShellCommand exec args =
         StandardOutput = p.StandardOutput.ReadToEnd()
         StandardError = p.StandardError.ReadToEnd()
     }
-
-type private test_case = {
-    s_expr: string
-}
-
-let private interpretation_tests: test_case list = [
-    {
-        s_expr = @"
-            (let-rec (fact x) =
-                (if (<= x 1.0)
-                    then 1.0
-                    else (*. x (fact (-. x 1.0 )))) in
-                (let f = fact in (print_int (int_of_float (f 6.0)))))
-        "
-    }
-    {
-        // Императивный факториал
-        s_expr = @"
-            (let acc : ([] f) = (new[] 1.0 1) in
-            (let-rec (fact-step x) =
-                (if (;тут-был-вася (<= x 1.0))
-                    then ()
-                    else
-                        (;Внимание!!!!-мутабельность!!!!-аыаыаыа
-                            (let v = (get[] acc 0) in
-                            (let v' = (*. x v) in
-                            (;
-                                (set[] acc 0 <- v')
-                                (fact-step (-. x 1.0))))))) in
-            (;
-                (fact-step 6.0)
-                (print_int (int_of_float (get[] acc 0))))))
-        "
-    }
-    {
-        s_expr = @"
-            (let arr = (new[] (, 5 ()) 2) in
-                (;
-                (set[] arr 0 <- (, 15 ()))
-                (print_int (+
-                    (let (, x _) = (get[] arr 0) in x)
-                    (let (, y _) = (get[] arr 1) in y)))))
-        "
-    }
-]
 
 [<Test>]
 let testGenC () =
