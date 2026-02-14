@@ -50,9 +50,6 @@
         <Compile Include="CmmInterpreter.fs" />
         <Compile Include="CmmConv.fs" />
         <Compile Include="CmmConvTests.fs" />
-        <Compile Include="CmmDeclosured.fs" />
-        <Compile Include="CmmDeclosuredInterpreter.fs" />
-        <Compile Include="CmmDeclosuredConv.fs" />
         <Compile Include="InterpreterTests.fs" />
         <Compile Include="GenC.fs" />
         <Compile Include="GenCTests.fs" />
@@ -118,6 +115,12 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="GenCTests\mandelbrot_output.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="GenCTests\loop_idiom.sexpr">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="GenCTests\loop_idiom_output.txt">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

@@ -13,6 +13,7 @@ module CmmInterpreter =
         | Int of int64
         | Float of double
         | Memory of value_t array
+        | FunctionPointer of Id.l
         
     let rec clone (v : value_t) =
         match v with
@@ -78,6 +79,7 @@ module CmmInterpreter =
             | Cmm.Unit -> value_t.Unit
             | Cmm.Int i -> value_t.Int i
             | Cmm.Float f -> value_t.Float f
+            | Cmm.FunctionPointer l -> value_t.FunctionPointer l
 
         match e with
         | Cmm.Atom atom_expr -> atom_expr |> interpret_atom_exp
@@ -151,39 +153,25 @@ module CmmInterpreter =
                     let v = lookup_var v
                     clone v
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"
-        | Cmm.ApplyClosure(label, args) ->
-            let fn_mem = lookup_mem label
-            match top_level_env.TryFind label with
-            | Some(fn) ->
-                // восстанавливаем биндинги к свободным переменным из полученного куска памяти
-                let mutable free_var_bindings = []
+        | Cmm.ApplyClosure(id, args) ->
+            let fn_mem = lookup_mem id
+            match fn_mem[0] with
+            | value_t.FunctionPointer(Id.L label) ->
+                match top_level_env.TryFind label with
+                | Some(fn) ->
+                    // формируем окружение
+                    let mutable env' = M.Empty()
+                    
+                    // Добавляем аргументы
+                    let arg_names = fn.args |> List.map fst
 
-                for i in 0 .. (fn.free_vars.Length - 1) do
-                    free_var_bindings <- fn_mem[int i] :: free_var_bindings
+                    for name, v in (List.zip arg_names (id :: args)) do
+                        let v' = lookup_var v
+                        env' <- env'.Add name v'
 
-                free_var_bindings <- free_var_bindings |> List.rev
-
-                // формируем окружение
-                let mutable env' = M.Empty()
-
-                // Добавляем в окружение значения для свободных переменных
-                let free_var_names = fn.free_vars |> List.map fst
-
-                for name, v in (List.zip free_var_names free_var_bindings) do
-                    env' <- env'.Add name v
-
-                // Добавляем заново наше замыкание, для того, чтобы корректно работала рекурсия
-                env' <- env'.Add label (value_t.Memory fn_mem)
-
-                // Добавляем аргументы
-                let arg_names = fn.args |> List.map fst
-
-                for name, v in (List.zip arg_names args) do
-                    let v' = lookup_var v
-                    env' <- env'.Add name v'
-
-                fn.body |> interpret_block top_level_env env'
-            | _ -> failwithf $"toplevel function with label %s{label}  not found"
+                    fn.body |> interpret_block top_level_env env'
+                | _ -> failwithf $"toplevel function with label %s{label} not found"
+            | _ -> failwith "first element of a closure tuple should be a function pointer!"
 
     let f (p: Cmm.program_t) =
         let env = M.Empty()

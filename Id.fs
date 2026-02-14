@@ -34,6 +34,7 @@ module Id =
         | Type.FunType _ -> "f"
         | Type.TupleType _ -> "t"
         | Type.ArrayType _ -> "a"
+        | Type.FunctionLabel -> "fl"
         | Type.VarType _ -> failwith "can't get id of type var"
 
     /// Используется для генерации имён временных переменных,

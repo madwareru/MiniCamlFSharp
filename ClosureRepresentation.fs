@@ -22,6 +22,7 @@ module ClosureRepresentation =
         { name: Id.l * Type.t
           args: (Id.t * Type.t) list
           free_vars: (Id.t * Type.t) list
+          is_closure: bool
           body: t }
 
     and t =

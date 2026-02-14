@@ -63,6 +63,7 @@ module Cmm =
         | Unit
         | Int of int64
         | Float of double
+        | FunctionPointer of Id.l
 
     type block_t =
         | Seq of statement_t * block_t
@@ -103,7 +104,7 @@ module Cmm =
     type fn_t =
         { name: Id.l * Type.t
           args: (Id.t * Type.t) list
-          free_vars: (Id.t * Type.t) list
+          is_closure: bool
           body: block_t }
 
     type program_t =

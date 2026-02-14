@@ -88,6 +88,7 @@ let private a_conv_tests: test_case list = [
                     name = "add.3" |> Id.L, FunType([IntType; IntType], IntType)
                     args = ["x.4", IntType; "y.5", IntType]
                     free_vars = []
+                    is_closure = false
                     body = Add("x.4", "y.5")
                 }
             ]
@@ -107,6 +108,7 @@ let private a_conv_tests: test_case list = [
                     name = "add.1" |> Id.L, FunType([IntType; IntType], IntType)
                     args = ["x.2", IntType; "y.3", IntType]
                     free_vars = []
+                    is_closure = false
                     body = Add("x.2", "y.3")
                 }
             ]
@@ -122,6 +124,7 @@ let private a_conv_tests: test_case list = [
                     name = "add.5" |> Id.L, FunType([IntType; IntType], IntType)
                     args = ["x.6", IntType; "y.7", IntType]
                     free_vars = ["z.4", IntType]
+                    is_closure = true
                     body =
                         Let (("Ti3.8", IntType), Add ("x.6", "y.7"),
                         Add ("Ti3.8", "z.4"))
@@ -149,6 +152,7 @@ let private a_conv_tests: test_case list = [
                     name = ("fact.6" |> Id.L, FunType ([FloatType], FloatType))
                     args = [("x.7", FloatType)]
                     free_vars = []
+                    is_closure = false
                     body =
                         Let(("Td2.8", FloatType), Float 1.0,
                         BranchLE("x.7", "Td2.8",

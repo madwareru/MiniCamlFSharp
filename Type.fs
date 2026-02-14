@@ -13,6 +13,8 @@ module Type =
         | ArrayType of t
         /// Специальный тип, используемый в местах, где мы должны выводить тип
         | VarType of t option ref
+        /// Используется в замыканиях:
+        | FunctionLabel
 
     /// Вспомогательная функция для генерации заглушек в местах где нужен вывод типа
     let gen_empty () = VarType <| ref None

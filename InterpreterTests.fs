@@ -15,12 +15,10 @@ open mini_caml_fsharp.ConstFolding
 open mini_caml_fsharp.Elimination
 open mini_caml_fsharp.ClosureRepresentationConv
 open mini_caml_fsharp.CmmConv
-open mini_caml_fsharp.CmmDeclosuredConv
 open mini_caml_fsharp.InterpreterShared
 open mini_caml_fsharp.KNormInterpreter
 open mini_caml_fsharp.ClosureRepresentationInterpreter
 open mini_caml_fsharp.CmmInterpreter
-open mini_caml_fsharp.CmmDeclosuredInterpreter
 
 type private test_case = {
     s_expr: string
@@ -228,7 +226,7 @@ let private interpretation_tests: test_case list = [
 ]
 
 [<Test>]
-let testKNormOptimizedInterpretation () =
+let testAllReprInterpretation () =
     let limit = 100
     let rec iter n e =
         printfn $"iteration %d{n}."
@@ -274,15 +272,5 @@ let testKNormOptimizedInterpretation () =
             | InterpreterShared.Unit -> CmmInterpreter.Unit
             | InterpreterShared.Int i -> CmmInterpreter.Int i
             | InterpreterShared.Float i -> CmmInterpreter.Float i
-            | _ -> failwith "invalid result type"
-        Assert.AreEqual(expected_res, res)
-        
-        let converted = converted |> CmmDeclosuredConv.f
-        let res = converted |> CmmDeclosuredInterpreter.f
-        let expected_res  =
-            match expected_res with
-            | CmmInterpreter.Unit -> CmmDeclosuredInterpreter.Unit
-            | CmmInterpreter.Int i -> CmmDeclosuredInterpreter.Int i
-            | CmmInterpreter.Float i -> CmmDeclosuredInterpreter.Float i
             | _ -> failwith "invalid result type"
         Assert.AreEqual(expected_res, res)

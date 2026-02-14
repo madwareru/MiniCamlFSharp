@@ -16,7 +16,6 @@ open mini_caml_fsharp.ConstFolding
 open mini_caml_fsharp.Elimination
 open mini_caml_fsharp.ClosureRepresentationConv
 open mini_caml_fsharp.CmmConv
-open mini_caml_fsharp.CmmDeclosuredConv
 open mini_caml_fsharp.GenC
 
 open System.IO
@@ -118,6 +117,7 @@ let testGenC () =
         "tst8"
         "tak"
         "mandelbrot"
+        "loop_idiom"
     ]
     
     for testName in tests do
@@ -142,7 +142,6 @@ let testGenC () =
             converted
             |> ClosureRepresentationConv.f
             |> CmmConv.f
-            |> CmmDeclosuredConv.f
             |> GenC.f
         
         printfn $"c generation is complete, writing to {c_file_path}"    
@@ -150,7 +149,7 @@ let testGenC () =
         
         File.Delete(exe_file_path)
         printfn $"compiling {c_file_path}"    
-        let compilation_result = executeShellCommand "cc" [c_file_path; "-o"; exe_file_path]
+        let compilation_result = executeShellCommand "cc" [c_file_path; "-O2"; "-o"; exe_file_path]
         printfn $"standard output: {compilation_result.StandardOutput}"
         printfn $"standard error: {compilation_result.StandardError}"
         

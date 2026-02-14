@@ -135,7 +135,7 @@ module CmmConv =
 
             insert binding'
 
-        | ClosureRepresentation.LetClosure((id, t), Id.L label, cont) ->
+        | ClosureRepresentation.LetClosure((id, _), Id.L label, cont) ->
             match top_level_free_var_map.TryFind label with
             | None -> failwithf $"free variables not found for function with label '{label}'!"
             | Some free_vars ->
@@ -145,23 +145,39 @@ module CmmConv =
                 // на функцию верхнего уровня, а следующие за ним
                 // значения соответствуют свободным переменным в
                 // этой функции.
-                let env' = env.Add id t
+                let free_vars, free_var_ts = free_vars |> List.unzip
+                let closure_t = Type.TupleType(Type.FunctionLabel :: free_var_ts)
+                
+                let env' = env.Add id closure_t
+                
                 let mutable ret = cont |> convert_expr top_level_free_var_map env'
-                let l = free_vars.Length
+                
+                let l = free_vars.Length + 1
                 let mutable i = l - 1
 
-                for var_name, _ in free_vars |> List.rev do
+                for var_name in free_vars |> List.rev do
                     let id_i = Id.gen_tmp Type.IntType
 
-                    ret <-
-                        Seq(Assignment((Id.gen_tmp Type.UnitType, Type.UnitType), MemoryPut(id, id_i, var_name)), ret)
-
+                    let mem_put = MemoryPut(id, id_i, var_name)
+                    let hole_id = Id.gen_tmp Type.UnitType
+                    
+                    ret <- Seq(Assignment((hole_id, Type.UnitType), mem_put), ret)
                     ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                     i <- i - 1
+                    
+                let fn_ptr_id_tmp = Id.gen_tmp Type.FunctionLabel
+                let id_i = Id.gen_tmp Type.IntType
+                
+                let mem_put = MemoryPut(id, id_i, fn_ptr_id_tmp)
+                let hole_id = Id.gen_tmp Type.UnitType
+                
+                ret <- Seq(Assignment((hole_id, Type.UnitType), mem_put), ret)
+                ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
+                ret <- Seq(Assignment((fn_ptr_id_tmp, Type.FunctionLabel), Atom <| FunctionPointer(Id.L label)), ret)
 
                 let count_id = Id.gen_tmp Type.IntType
                 let apply_expr = ApplyDirect(Id.L "min_caml_alloc_vector", [ count_id ])
-                let result_assignment = Assignment((id, t), apply_expr)
+                let result_assignment = Assignment((id, closure_t), apply_expr)
                 ret <- Seq(result_assignment, ret)
 
                 let count_id_assignment = Assignment((count_id, Type.IntType), Atom <| Int l)
@@ -172,19 +188,47 @@ module CmmConv =
     let private convert_function top_level_free_var_map (fn: ClosureRepresentation.fundef) =
         let mutable env = M.Empty()
 
-        for name, t in fn.free_vars do
-            env <- env.Add name t
+        match fn.is_closure with
+        | false ->
+            for name, t in fn.args do
+                env <- env.Add name t
+            { name = fn.name
+              args = fn.args
+              is_closure = fn.is_closure
+              body = fn.body |> convert_expr top_level_free_var_map env
+            }
+        | true ->
+            for name, t in fn.free_vars do
+                env <- env.Add name t
+            
+            let free_var_ts = fn.free_vars |> List.map snd
+            let closure_t = Type.TupleType(Type.FunctionLabel :: free_var_ts)
 
-        let Id.L label, t = fn.name
-        env <- env.Add label t
+            let Id.L label, t = fn.name
+            let new_args = (label, closure_t) :: fn.args
+            let t =
+                match t with
+                | Type.FunType(_, ret_t) -> Type.FunType(new_args |> List.map snd, ret_t)
+                | _ -> failwith "unreachable"
+            env <- env.Add label closure_t
 
-        for name, t in fn.args do
-            env <- env.Add name t
+            for name, t in fn.args do
+                env <- env.Add name t
+                
+            let mutable ret = fn.body |> convert_expr top_level_free_var_map env
+            
+            let mutable i = fn.free_vars.Length
 
-        { name = fn.name
-          args = fn.args
-          free_vars = fn.free_vars
-          body = fn.body |> convert_expr top_level_free_var_map env }
+            for id, t in fn.free_vars |> List.rev do
+                let id_i = Id.gen_tmp Type.IntType
+                ret <- Seq(Assignment((id, t), MemoryGet(label, id_i)), ret)
+                ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
+                i <- i - 1
+
+            { name = (Id.L label, t)
+              args = new_args
+              is_closure = fn.is_closure
+              body = ret }
 
     let f (p: ClosureRepresentation.program) =
         let mutable top_level_free_var_map = M.Empty()

@@ -60,10 +60,44 @@ module ClosureRepresentationConv =
                          KNorm.args = argts
                          KNorm.body = body },
                        cont) ->
-            // 1. Cначала нужно получить свободные переменные из тела функции
-            //    (это все связанные имена кроме имени функции и имён аргументов),
-            //    а так же получить из окружения их типы для того, чтобы положить
-            //    в closure в случае если мы имеем дело с замыканием
+            let rec var_used_not_as_a_callee e =
+                // Предполагается, что все идентификаторы уже прошли этап AlphaConv    
+                match e with
+                | KNorm.Unit
+                | KNorm.Int _
+                | KNorm.Float _ -> false
+                
+                | KNorm.Neg x
+                | KNorm.FNeg x
+                | KNorm.Var x -> x = name
+                
+                | KNorm.Add(x, y)
+                | KNorm.Sub(x, y)
+                | KNorm.FAdd(x, y)
+                | KNorm.FSub(x, y)
+                | KNorm.FMul(x, y)
+                | KNorm.FDiv(x, y)
+                | KNorm.Get(x, y) -> (x = name) || (y = name)
+                
+                | KNorm.Put(x, y, z) -> (x = name) || (y = name) || (z = name)
+                
+                | KNorm.Tuple xs
+                | KNorm.ExtFunApply(_, xs)
+                | KNorm.Apply(_, xs)  -> xs |> List.exists (fun x -> x = name)
+                
+                | KNorm.BranchEq(x, y, e1, e2)
+                | KNorm.BranchLE(x, y, e1, e2) ->
+                    (x = name) ||
+                    (y = name) ||
+                    (var_used_not_as_a_callee e1) ||
+                    (var_used_not_as_a_callee e2)
+                    
+                | KNorm.LetRec({ body = body }, cont)
+                | KNorm.Let(_, body, cont) ->
+                    (var_used_not_as_a_callee body) ||
+                    (var_used_not_as_a_callee cont)
+                | KNorm.LetTuple(_, v, cont) -> v = name || (var_used_not_as_a_callee cont)
+            
             let args = argts |> List.map fst
             let body_used_vars = KNorm.used_vars body
 
@@ -79,16 +113,9 @@ module ClosureRepresentationConv =
                 | Some t -> body_free_vars_with_types <- (free_var, t) :: body_free_vars_with_types
                 | _ -> failwith $"failed to find {free_var} in environment!"
 
-            // 2. В случае если список свободных переменных непуст, мы имеем дело с
-            //    замыканием. В этом случае для рекурсивного вызова body и cont нужно
-            //    передавать неизменённый набор known, в противном случае в него нужно
-            //    добавить имя нашей функции (это нужно для того, чтобы впоследствии
-            //    выбрать, прямой вызов функции нужно делать или вызов замыкания)
-            let closure_found = not body_free_vars.IsEmpty
-            let known' = if closure_found then known else known.Add name
+            let is_closure = (not body_free_vars.IsEmpty) || (cont |> var_used_not_as_a_callee)
+            let known' = if is_closure then known else known.Add name
 
-            // 3. Рекурсивно вычисляем body, формируем новое объявление функции верхнего
-            //    уровня и соединяем его с именами, полученными после рекурсивного вызова
             let env' = env.Add name t
             let env'' = env'.AddList argts
             let body', toplevel_with_body_defs = body |> convert env'' known' toplevel
@@ -97,23 +124,13 @@ module ClosureRepresentationConv =
                 { name = (Id.L(name), t)
                   args = argts
                   free_vars = body_free_vars_with_types |> List.rev
+                  is_closure = is_closure
                   body = body' }
 
             let toplevel' = fun_definition :: toplevel_with_body_defs
 
-            // 4. Рекурсивно вычисляем cont и возвращаем итоговое значение и toplevel,
-            //    при этом возможны 3 варианта развития событий:
-            //    1. По какой-то причине в cont вообще не использовалось наше объявление
-            //       функции. В таком случае не должно создаваться замыкание, вместо этого
-            //       возвращаются модифицированные cont и toplevel
-            //    2. Объявление использовалось в cont, но свободных переменных нет в body,
-            //       в этом случае тоже не нужно создавать замыкание
-            //    3. Во всех остальных случаях создаём замыкание
-            let cont_used_vars = cont |> KNorm.used_vars
-
             match cont |> convert env' known' toplevel' with
-            | cont', toplevel'' when not (cont_used_vars.Contains name) -> cont', toplevel''
-            | cont', toplevel'' when body_free_vars.IsEmpty -> cont', toplevel''
+            | cont', toplevel'' when not is_closure -> cont', toplevel''
             | cont', toplevel'' -> ClosureRepresentation.LetClosure((name, t), name |> Id.L, cont'), toplevel''
 
     let f e : ClosureRepresentation.program =
