@@ -116,9 +116,10 @@ let testGenC () =
         "tst7"
         "tst8"
         "tak"
+        "loop_idiom"
         "mandelbrot"
         "mandelbrot2"
-        "loop_idiom"
+        "mandelbrot3"
     ]
     
     for testName in tests do

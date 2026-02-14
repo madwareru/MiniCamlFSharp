@@ -104,7 +104,6 @@ module Cmm =
     type fn_t =
         { name: Id.l * Type.t
           args: (Id.t * Type.t) list
-          is_closure: bool
           body: block_t }
 
     type program_t =

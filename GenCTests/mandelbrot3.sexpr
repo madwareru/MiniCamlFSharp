@@ -7,19 +7,15 @@
   (let-rec (x-loop-step x) =
     (let cr = (-. (/. (dbl (float_of_int x)) 80.0) 1.5) in
     (let ci = (-. (/. (dbl (float_of_int y)) 80.0) 1.0) in
-    (let-rec (iloop i zr zi zr2 zi2) = 
-      (if (= i 0) 
+    (let-rec (iloop steps zr zi) = 
+      (if (= steps 0)
         then (print_int 1)
         else
-        (let tr = (+. (-. zr2 zi2) cr) in
-        (let ti = (+. (*. (dbl zr) zi) ci) in
-        (let zr = tr in
-        (let zi = ti in
-        (let zr2 = (*. zr zr) in
-        (let zi2 = (*. zi zi) in
+        (let (, zr2 zi2) = (, (*. zr zr) (*. zi zi)) in
+        (let (, zi zr) = (, (+. (*. (dbl zr) zi) ci) (+. (-. zr2 zi2) cr)) in
         (if (> (+. zr2 zi2) 4.0) 
           then (print_int 0)
-          else(iloop (- i 1) zr zi zr2 zi2))))))))) in 
-    (;основное-вычисление (iloop 1000 0.0 0.0 0.0 0.0))))) in
+          else (iloop (- steps 1) zr zi))))) in 
+    (;основное-вычисление (iloop 1000 0.0 0.0))))) in
   (;столбцы (do-loop 0 79 x-loop-step) (print_ln ()))) in
 (;ряды (do-loop 0 79 y-loop-step)))))

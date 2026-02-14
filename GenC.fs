@@ -149,6 +149,8 @@ static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
             return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
         case FLOAT_TAG:
             return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
+        case FUNCTION_PTR_TAG:
+            return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
         default: 
             for(int64_t i = 0; i < lhs.m.length; i++) {
                 v_t r = min_caml_less_eq(lhs.m.v[i], rhs.m.v[i]);
@@ -163,9 +165,11 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
         case UNIT_TAG:
             return min_caml_make_int(1);
         case INT_TAG:
-            return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
+            return min_caml_make_int(lhs.i == rhs.i ? 1 : 0);
         case FLOAT_TAG:
-            return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
+            return min_caml_make_int(lhs.f == rhs.f ? 1 : 0);
+        case FUNCTION_PTR_TAG:
+            return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
         default: 
             for(int64_t i = 0; i < lhs.m.length; i++) {
                 v_t r = min_caml_eq(lhs.m.v[i], rhs.m.v[i]);

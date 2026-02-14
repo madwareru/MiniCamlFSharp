@@ -194,7 +194,6 @@ module CmmConv =
                 env <- env.Add name t
             { name = fn.name
               args = fn.args
-              is_closure = fn.is_closure
               body = fn.body |> convert_expr top_level_free_var_map env
             }
         | true ->
@@ -227,7 +226,6 @@ module CmmConv =
 
             { name = (Id.L label, t)
               args = new_args
-              is_closure = fn.is_closure
               body = ret }
 
     let f (p: ClosureRepresentation.program) =
