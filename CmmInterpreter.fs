@@ -14,11 +14,11 @@ module CmmInterpreter =
         | Float of double
         | Memory of value_t array
         | FunctionPointer of Id.l
-        
-    let rec clone (v : value_t) =
+
+    let rec clone (v: value_t) =
         match v with
-        | Memory mem ->Memory (mem |> Array.map clone)
-        | _ -> v 
+        | Memory mem -> Memory(mem |> Array.map clone)
+        | _ -> v
 
     let rec private cmp_values cmp l r =
         match l, r with
@@ -149,19 +149,20 @@ module CmmInterpreter =
                     let v = lookup_var v
                     let mem = Array.create (int count) v
                     value_t.Memory mem
-                | "min_caml_clone", [v] ->
+                | "min_caml_clone", [ v ] ->
                     let v = lookup_var v
                     clone v
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"
         | Cmm.ApplyClosure(id, args) ->
             let fn_mem = lookup_mem id
+
             match fn_mem[0] with
             | value_t.FunctionPointer(Id.L label) ->
                 match top_level_env.TryFind label with
                 | Some(fn) ->
                     // формируем окружение
                     let mutable env' = M.Empty()
-                    
+
                     // Добавляем аргументы
                     let arg_names = fn.args |> List.map fst
 

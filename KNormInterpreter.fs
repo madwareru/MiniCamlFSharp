@@ -128,7 +128,7 @@ module KNormInterpreter =
                 let v = lookup_var v
                 let arr = Array.create (int count) v
                 value_t.Array arr
-            | "clone", [v] ->
+            | "clone", [ v ] ->
                 let v = lookup_var v
                 InterpreterShared.clone v
             | _ -> failwith "unknown external function"

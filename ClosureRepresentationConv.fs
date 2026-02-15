@@ -61,16 +61,16 @@ module ClosureRepresentationConv =
                          KNorm.body = body },
                        cont) ->
             let rec var_used_not_as_a_callee e =
-                // Предполагается, что все идентификаторы уже прошли этап AlphaConv    
+                // Предполагается, что все идентификаторы уже прошли этап AlphaConv
                 match e with
                 | KNorm.Unit
                 | KNorm.Int _
                 | KNorm.Float _ -> false
-                
+
                 | KNorm.Neg x
                 | KNorm.FNeg x
                 | KNorm.Var x -> x = name
-                
+
                 | KNorm.Add(x, y)
                 | KNorm.Sub(x, y)
                 | KNorm.FAdd(x, y)
@@ -78,26 +78,24 @@ module ClosureRepresentationConv =
                 | KNorm.FMul(x, y)
                 | KNorm.FDiv(x, y)
                 | KNorm.Get(x, y) -> (x = name) || (y = name)
-                
+
                 | KNorm.Put(x, y, z) -> (x = name) || (y = name) || (z = name)
-                
+
                 | KNorm.Tuple xs
                 | KNorm.ExtFunApply(_, xs)
-                | KNorm.Apply(_, xs)  -> xs |> List.exists (fun x -> x = name)
-                
+                | KNorm.Apply(_, xs) -> xs |> List.exists (fun x -> x = name)
+
                 | KNorm.BranchEq(x, y, e1, e2)
                 | KNorm.BranchLE(x, y, e1, e2) ->
-                    (x = name) ||
-                    (y = name) ||
-                    (var_used_not_as_a_callee e1) ||
-                    (var_used_not_as_a_callee e2)
-                    
+                    (x = name)
+                    || (y = name)
+                    || (var_used_not_as_a_callee e1)
+                    || (var_used_not_as_a_callee e2)
+
                 | KNorm.LetRec({ body = body }, cont)
-                | KNorm.Let(_, body, cont) ->
-                    (var_used_not_as_a_callee body) ||
-                    (var_used_not_as_a_callee cont)
+                | KNorm.Let(_, body, cont) -> (var_used_not_as_a_callee body) || (var_used_not_as_a_callee cont)
                 | KNorm.LetTuple(_, v, cont) -> v = name || (var_used_not_as_a_callee cont)
-            
+
             let args = argts |> List.map fst
             let body_used_vars = KNorm.used_vars body
 

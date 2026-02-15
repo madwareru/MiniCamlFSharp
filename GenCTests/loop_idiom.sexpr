@@ -1,6 +1,6 @@
-(let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ = 
-  (if (<= start end) 
+(let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ =
+  (if (<= start end)
     then (; (iter-action start) (do-loop (+ start 1) end iter-action))
-    else ()) in 
+    else ()) in
 (let-rec (printer x) = (print_int_ln x) in
 (do-loop 0 10 printer)))

@@ -133,7 +133,7 @@ module ClosureRepresentationInterpreter =
                     let v = lookup_var v
                     let arr = Array.create (int count) v
                     value_t.Array arr
-                | "min_caml_clone", [v] ->
+                | "min_caml_clone", [ v ] ->
                     let v = lookup_var v
                     InterpreterShared.clone v
                 | _ -> failwithf $"toplevel function with label %s{label}  not found"

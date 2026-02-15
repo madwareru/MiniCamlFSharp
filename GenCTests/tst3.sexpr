@@ -1,7 +1,7 @@
 (let arr = (new[] (, 5 ()) 2) in
 (;
   (set[] arr 0 <- (, 15 ()))
-  (print_int 
+  (print_int
     (+
       (let (, x _) = (get[] arr 0) in x)
       (let (, y _) = (get[] arr 1) in y)))

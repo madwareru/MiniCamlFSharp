@@ -17,12 +17,12 @@ module InterpreterShared =
           env: 't value_t M
           body: 't }
 
-    let rec clone (v : _ value_t) =
+    let rec clone (v: _ value_t) =
         match v with
-        | Array vs -> Array (vs |> Array.map clone)
-        | Tuple ts -> Tuple (ts |> List.map clone)
-        | _ -> v 
-    
+        | Array vs -> Array(vs |> Array.map clone)
+        | Tuple ts -> Tuple(ts |> List.map clone)
+        | _ -> v
+
     type Comparison =
         | EQ
         | LE

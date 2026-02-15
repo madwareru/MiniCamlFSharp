@@ -59,7 +59,7 @@ let testGenC () =
             let e' = e' |> ConstFolding.f
             let e' = e' |> Elimination.f
             if e = e' then e' else iter (n - 1) e'
-    
+
     let tests = [
         "tst1"
         "tst2"
@@ -75,13 +75,13 @@ let testGenC () =
         "mandelbrot2"
         "mandelbrot3"
     ]
-    
+
     for testName in tests do
         let c_file_path = Path.Combine("GenCTests", $"{testName}.c")
         let exe_file_path = Path.Combine("GenCTests", $"{testName}.exe")
         let output_expected_path = Path.Combine("GenCTests", $"{testName}_output.txt")
         let source_path = Path.Combine("GenCTests", $"{testName}.sexpr")
-        
+
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
         Id.reset ()
@@ -92,25 +92,25 @@ let testGenC () =
             |> Typing.f Typing.ProgramShouldReturnUnit
             |> KNormalisation.f
             |> AlphaConv.f
-            
+
         let converted = (limit, k_form) ||> iter
         let res_text =
             converted
             |> ClosureRepresentationConv.f
             |> CmmConv.f
             |> GenC.f
-        
-        printfn $"c generation is complete, writing to {c_file_path}"    
+
+        printfn $"c generation is complete, writing to {c_file_path}"
         File.WriteAllText(c_file_path, res_text)
-        
+
         File.Delete(exe_file_path)
-        printfn $"compiling {c_file_path}"    
+        printfn $"compiling {c_file_path}"
         let compilation_result = executeShellCommand "cc" [c_file_path; "-O2"; "-o"; exe_file_path]
         printfn $"standard output: {compilation_result.StandardOutput}"
         printfn $"standard error: {compilation_result.StandardError}"
-        
+
         Assert.IsTrue(File.Exists(exe_file_path))
-        
+
         let result = executeShellCommand exe_file_path []
         let output_expected = File.ReadAllText(output_expected_path)
         Assert.AreEqual(output_expected, result.StandardOutput)

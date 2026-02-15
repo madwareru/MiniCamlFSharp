@@ -34,7 +34,8 @@ module KNormalisation =
         | Type.VarType _ -> failwith "unexpected type variable found"
         | Type.UnitType
         | Type.IntType
-        | Type.FloatType -> t
+        | Type.FloatType
+        | Type.FunctionLabel -> t
         | Type.BoolType -> Type.IntType
         | Type.ArrayType tt -> replace_bool tt |> Type.ArrayType
         | Type.TupleType ts -> ts |> List.map replace_bool |> Type.TupleType
@@ -141,11 +142,11 @@ module KNormalisation =
 
                     bind [] exs)
             | _ -> failwith "failed to k-normalize function application"
-        
-        // Клонирование делегируется вызову внешней функции    
+
+        // Клонирование делегируется вызову внешней функции
         | Syntax.CloneNode e ->
             let _, e_t as g_e = normalize env e
-            g_e |> insert_let (fun e' -> KNorm.ExtFunApply("clone", [e']), e_t)
+            g_e |> insert_let (fun e' -> KNorm.ExtFunApply("clone", [ e' ]), e_t)
 
         // Создание массива делегируется вызову внешней функции
         | Syntax.ArrayNode(v_e, count_e) ->

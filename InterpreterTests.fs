@@ -249,12 +249,12 @@ let testAllReprInterpretation () =
             |> Typing.f Typing.ProgramShouldNotReturnFunction
             |> KNormalisation.f
             |> AlphaConv.f
-        
+
         let converted = (limit, k_form) ||> iter
         let res = converted |> KNormInterpreter.f
         let expected_res = case.expected_res
         Assert.AreEqual(expected_res, res)
-        
+
         let converted = converted |> ClosureRepresentationConv.f
         let res = converted |> ClosureRepresentationInterpreter.f
         let expected_res : ClosureRepresentationInterpreter.value_t =
@@ -264,7 +264,7 @@ let testAllReprInterpretation () =
             | InterpreterShared.Float i -> InterpreterShared.Float i
             | _ -> failwith "invalid result type"
         Assert.AreEqual(expected_res, res)
-        
+
         let converted = converted |> CmmConv.f
         let res = converted |> CmmInterpreter.f
         let expected_res  =

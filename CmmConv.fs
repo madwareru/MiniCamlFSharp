@@ -147,11 +147,11 @@ module CmmConv =
                 // этой функции.
                 let free_vars, free_var_ts = free_vars |> List.unzip
                 let closure_t = Type.TupleType(Type.FunctionLabel :: free_var_ts)
-                
+
                 let env' = env.Add id closure_t
-                
+
                 let mutable ret = cont |> convert_expr top_level_free_var_map env'
-                
+
                 let l = free_vars.Length + 1
                 let mutable i = l - 1
 
@@ -160,17 +160,17 @@ module CmmConv =
 
                     let mem_put = MemoryPut(id, id_i, var_name)
                     let hole_id = Id.gen_tmp Type.UnitType
-                    
+
                     ret <- Seq(Assignment((hole_id, Type.UnitType), mem_put), ret)
                     ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                     i <- i - 1
-                    
+
                 let fn_ptr_id_tmp = Id.gen_tmp Type.FunctionLabel
                 let id_i = Id.gen_tmp Type.IntType
-                
+
                 let mem_put = MemoryPut(id, id_i, fn_ptr_id_tmp)
                 let hole_id = Id.gen_tmp Type.UnitType
-                
+
                 ret <- Seq(Assignment((hole_id, Type.UnitType), mem_put), ret)
                 ret <- Seq(Assignment((id_i, Type.IntType), Atom <| Int i), ret)
                 ret <- Seq(Assignment((fn_ptr_id_tmp, Type.FunctionLabel), Atom <| FunctionPointer(Id.L label)), ret)
@@ -192,30 +192,32 @@ module CmmConv =
         | false ->
             for name, t in fn.args do
                 env <- env.Add name t
+
             { name = fn.name
               args = fn.args
-              body = fn.body |> convert_expr top_level_free_var_map env
-            }
+              body = fn.body |> convert_expr top_level_free_var_map env }
         | true ->
             for name, t in fn.free_vars do
                 env <- env.Add name t
-            
+
             let free_var_ts = fn.free_vars |> List.map snd
             let closure_t = Type.TupleType(Type.FunctionLabel :: free_var_ts)
 
             let Id.L label, t = fn.name
             let new_args = (label, closure_t) :: fn.args
+
             let t =
                 match t with
                 | Type.FunType(_, ret_t) -> Type.FunType(new_args |> List.map snd, ret_t)
                 | _ -> failwith "unreachable"
+
             env <- env.Add label closure_t
 
             for name, t in fn.args do
                 env <- env.Add name t
-                
+
             let mutable ret = fn.body |> convert_expr top_level_free_var_map env
-            
+
             let mutable i = fn.free_vars.Length
 
             for id, t in fn.free_vars |> List.rev do

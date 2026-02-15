@@ -37,7 +37,7 @@ let private tests = [
             Type.FunType([Type.VarType(ref <| Some Type.UnitType)], Type.IntType)
         )
     }
-    
+
     // Пустой тип и тип функции
     {
         before_unification = (
