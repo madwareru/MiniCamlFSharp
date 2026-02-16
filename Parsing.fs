@@ -1,6 +1,5 @@
 module mini_caml_fsharp.Parsing
 
-open Microsoft.FSharp.Core
 open mini_caml_fsharp.SExpr
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type

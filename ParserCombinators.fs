@@ -92,7 +92,7 @@ type Parser<'TToken, 'TValue> with
 
             cont [], rem
 
-    member this.many = this +=>+ this.many |=> List.Cons
+    member this.many = this +=>+ this.some |=> List.Cons
 
     member this.sepBy separator =
         this +=>+ (separator -=>+ this).many |=> List.Cons
