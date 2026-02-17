@@ -20,6 +20,9 @@ open mini_caml_fsharp.GenC
 open System.IO
 open System.Diagnostics
 
+type OutputType =
+    | Txt
+    | Ppm
 
 type CommandResult =
     { ExitCode: int
@@ -61,26 +64,30 @@ let testGenC () =
             if e = e' then e' else iter (n - 1) e'
 
     let tests = [
-        "tst1"
-        "tst2"
-        "tst3"
-        "tst4"
-        "tst5"
-        "tst6"
-        "tst7"
-        "tst8"
-        "tak"
-        "loop_idiom"
-        "mandelbrot"
-        "mandelbrot2"
-        "mandelbrot3"
+        "tst1", Txt
+        "tst2", Txt
+        "tst3", Txt
+        "tst4", Txt
+        "tst5", Txt
+        "tst6", Txt
+        "tst7", Txt
+        "tst8", Txt
+        "tak", Txt
+        "loop_idiom", Txt
+        "mandelbrot", Txt
+        "mandelbrot2", Txt
+        "mandelbrot3", Txt
+        "mandelbrot_colored", Ppm
     ]
 
-    for testName in tests do
-        let c_file_path = Path.Combine("GenCTests", $"{testName}.c")
-        let exe_file_path = Path.Combine("GenCTests", $"{testName}.exe")
-        let output_expected_path = Path.Combine("GenCTests", $"{testName}_output.txt")
-        let source_path = Path.Combine("GenCTests", $"{testName}.sexpr")
+    for test_name, output_type in tests do
+        let c_file_path = Path.Combine("GenCTests", $"{test_name}.c")
+        let exe_file_path = Path.Combine("GenCTests", $"{test_name}.exe")
+        let output_expected_path =
+            match output_type with
+            | Txt -> Path.Combine("GenCTests", $"{test_name}_output.txt")
+            | Ppm -> Path.Combine("GenCTests", $"{test_name}_output.ppm")
+        let source_path = Path.Combine("GenCTests", $"{test_name}.sexpr")
 
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
@@ -109,8 +116,9 @@ let testGenC () =
         printfn $"standard output: {compilation_result.StandardOutput}"
         printfn $"standard error: {compilation_result.StandardError}"
 
-        Assert.IsTrue(File.Exists(exe_file_path))
+        Assert.AreEqual(0, compilation_result.ExitCode)
 
         let result = executeShellCommand exe_file_path []
         let output_expected = File.ReadAllText(output_expected_path)
+        Assert.AreEqual(0, result.ExitCode)
         Assert.AreEqual(output_expected, result.StandardOutput)

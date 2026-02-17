@@ -141,6 +141,14 @@ static v_t min_caml_print_ln(v_t v_unused) {
     printf(""\n"");
     return min_caml_make_unit();
 }
+static v_t min_caml_print_tab(v_t v_unused) {
+    printf(""\t"");
+    return min_caml_make_unit();
+}
+static v_t min_caml_put_char(v_t v) {
+    putchar((char)(v.i & 0xFF));
+    return min_caml_make_unit();
+}
 static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
     switch(lhs.tag) {
         case UNIT_TAG:

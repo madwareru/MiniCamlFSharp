@@ -353,6 +353,8 @@ module Typing =
         extenv.Value <- extenv.Value.Add "print_bool" (Type.FunType([ Type.BoolType ], Type.UnitType))
         extenv.Value <- extenv.Value.Add "print_bool_ln" (Type.FunType([ Type.BoolType ], Type.UnitType))
         extenv.Value <- extenv.Value.Add "print_ln" (Type.FunType([ Type.UnitType ], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "print_tab" (Type.FunType([ Type.UnitType ], Type.UnitType))
+        extenv.Value <- extenv.Value.Add "put_char" (Type.FunType([ Type.IntType ], Type.UnitType))
         let expr_type = e |> infer (M.Empty())
         extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
 
