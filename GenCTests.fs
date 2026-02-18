@@ -31,36 +31,35 @@ type CommandResult =
       StandardError: string }
 
 let executeShellCommand exec args =
-    let startInfo = ProcessStartInfo()
-    startInfo.FileName <- exec
-    startInfo.RedirectStandardError <- true
-    startInfo.RedirectStandardOutput <- true
-    startInfo.UseShellExecute <- false
-    startInfo.CreateNoWindow <- true
+    let start_info = ProcessStartInfo()
+    start_info.FileName <- exec
+    start_info.RedirectStandardError <- true
+    start_info.RedirectStandardOutput <- true
+    start_info.UseShellExecute <- false
+    start_info.CreateNoWindow <- true
     for arg in args do
-        startInfo.ArgumentList.Add(arg)
+        start_info.ArgumentList.Add(arg)
 
     use p = new Process()
-    p.StartInfo <- startInfo
+    p.StartInfo <- start_info
 
-    // Используем StringBuilder для сбора вывода
-    let outputBuilder = System.Text.StringBuilder()
-    let errorBuilder = System.Text.StringBuilder()
+    let mutable output_builder = System.Text.StringBuilder()
+    let mutable error_builder = System.Text.StringBuilder()
 
-    // Добавляем обработчики событий для асинхронного чтения
     p.OutputDataReceived.Add(fun args ->
-        if args.Data <> null then
-            outputBuilder.AppendLine(args.Data) |> ignore
-    )
+        output_builder <-
+            match args.Data with
+            | text when text <> null -> output_builder.AppendLine(text)
+            | _ -> output_builder)
 
     p.ErrorDataReceived.Add(fun args ->
-        if args.Data <> null then
-            errorBuilder.AppendLine(args.Data) |> ignore
-    )
+        error_builder <-
+            match args.Data with
+            | text when text <> null -> error_builder.AppendLine(text)
+            | _ -> error_builder)
 
     p.Start() |> ignore
 
-    // Начинаем асинхронное чтение
     p.BeginOutputReadLine()
     p.BeginErrorReadLine()
 
@@ -68,8 +67,8 @@ let executeShellCommand exec args =
 
     {
         ExitCode = p.ExitCode
-        StandardOutput = outputBuilder.ToString()
-        StandardError = errorBuilder.ToString()
+        StandardOutput = output_builder.ToString()
+        StandardError = error_builder.ToString()
     }
 
 [<Test>]
@@ -140,7 +139,7 @@ let testGenC () =
         printfn $"compiling {c_file_path}"
         let compilation_result =
             if not is_windows then
-                executeShellCommand "cc" [c_file_path; "-O2"; "-o"; exe_file_path]
+                executeShellCommand "cc" [c_file_path; "-O3"; "-o"; exe_file_path]
             else
                 executeShellCommand "cl" ["/O2"; $"/Fe{exe_file_path}"; c_file_path]
         printfn $"standard output: {compilation_result.StandardOutput}"

@@ -2,9 +2,9 @@
   (; 
     (put_char 80)
     (print_int_ln 3)
-    (print_int 80)
+    (print_int 1024)
     (put_char 32)
-    (print_int_ln 80)
+    (print_int_ln 1024)
     (print_int_ln 255)) in
 (let-rec (dbl x) = (+. x x) in
 (let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ =
@@ -13,26 +13,25 @@
     else ()) in
 (let-rec (y-loop-step y) =
   (let-rec (x-loop-step x) =
-    (let cr = (-. (/. (dbl (float_of_int x)) 80.0) 1.5) in
-    (let ci = (-. (/. (dbl (float_of_int y)) 80.0) 1.0) in
+    (let cr = (-. (/. (dbl (float_of_int x)) 1024.0) 1.5) in
+    (let ci = (-. (/. (dbl (float_of_int y)) 1024.0) 1.0) in
     (let-rec (iloop steps zr zi) =
       (if (= steps 0)
         then (; 
-          (print_int 255) (print_tab ())
-          (print_int 255) (print_tab ())
-          (print_int 255) (print_tab ()))
+          (print_int 0) (print_tab ())
+          (print_int 0) (print_tab ())
+          (print_int 0) (print_tab ()))
         else
         (let (, zr2 zi2) = (, (*. zr zr) (*. zi zi)) in
         (let (, zi zr) = (, (+. (*. (dbl zr) zi) ci) (+. (-. zr2 zi2) cr)) in
         (if (> (+. zr2 zi2) 4.0)
           then
-            (let lightness = (if (> steps 255) then 0 else (- 255 steps)) in 
             (; 
-              (print_int lightness) (print_tab ())
-              (print_int lightness) (print_tab ())
-              (print_int lightness) (print_tab ())
-            ))
+              (print_int steps) (print_tab ())
+              (print_int steps) (print_tab ())
+              (print_int steps) (print_tab ())
+            )
           else (iloop (- steps 1) zr zi))))) in
-    (;основное-вычисление (iloop 4000 0.0 0.0))))) in
-  (;столбцы (do-loop 0 79 x-loop-step) (print_ln ()))) in
-(;заголовок-и-далее-ряды (print-ppm-header ()) (do-loop 0 79 y-loop-step))))))
+    (;основное-вычисление (iloop 255 0.0 0.0))))) in
+  (;столбцы (do-loop 0 1023 x-loop-step) (print_ln ()))) in
+(;заголовок-и-далее-ряды (print-ppm-header ()) (do-loop 0 1023 y-loop-step))))))
