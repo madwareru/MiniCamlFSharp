@@ -19,6 +19,7 @@ open mini_caml_fsharp.GenC
 
 open System.IO
 open System.Diagnostics
+open System.Runtime.InteropServices
 
 type OutputType =
     | Txt
@@ -38,14 +39,37 @@ let executeShellCommand exec args =
     startInfo.CreateNoWindow <- true
     for arg in args do
         startInfo.ArgumentList.Add(arg)
+
     use p = new Process()
     p.StartInfo <- startInfo
+
+    // Используем StringBuilder для сбора вывода
+    let outputBuilder = System.Text.StringBuilder()
+    let errorBuilder = System.Text.StringBuilder()
+
+    // Добавляем обработчики событий для асинхронного чтения
+    p.OutputDataReceived.Add(fun args ->
+        if args.Data <> null then
+            outputBuilder.AppendLine(args.Data) |> ignore
+    )
+
+    p.ErrorDataReceived.Add(fun args ->
+        if args.Data <> null then
+            errorBuilder.AppendLine(args.Data) |> ignore
+    )
+
     p.Start() |> ignore
+
+    // Начинаем асинхронное чтение
+    p.BeginOutputReadLine()
+    p.BeginErrorReadLine()
+
     p.WaitForExit()
+
     {
         ExitCode = p.ExitCode
-        StandardOutput = p.StandardOutput.ReadToEnd()
-        StandardError = p.StandardError.ReadToEnd()
+        StandardOutput = outputBuilder.ToString()
+        StandardError = errorBuilder.ToString()
     }
 
 [<Test>]
@@ -81,13 +105,13 @@ let testGenC () =
     ]
 
     for test_name, output_type in tests do
-        let c_file_path = Path.Combine("GenCTests", $"{test_name}.c")
-        let exe_file_path = Path.Combine("GenCTests", $"{test_name}.exe")
+        let c_file_path = Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}.c"))
+        let exe_file_path = Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}.exe"))
         let output_expected_path =
             match output_type with
-            | Txt -> Path.Combine("GenCTests", $"{test_name}_output.txt")
-            | Ppm -> Path.Combine("GenCTests", $"{test_name}_output.ppm")
-        let source_path = Path.Combine("GenCTests", $"{test_name}.sexpr")
+            | Txt -> Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}_output.txt"))
+            | Ppm -> Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}_output.ppm"))
+        let source_path = Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}.sexpr"))
 
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
@@ -110,9 +134,15 @@ let testGenC () =
         printfn $"c generation is complete, writing to {c_file_path}"
         File.WriteAllText(c_file_path, res_text)
 
+        let is_windows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+
         File.Delete(exe_file_path)
         printfn $"compiling {c_file_path}"
-        let compilation_result = executeShellCommand "cc" [c_file_path; "-O2"; "-o"; exe_file_path]
+        let compilation_result =
+            if not is_windows then
+                executeShellCommand "cc" [c_file_path; "-O2"; "-o"; exe_file_path]
+            else
+                executeShellCommand "cl" ["/O2"; $"/Fe{exe_file_path}"; c_file_path]
         printfn $"standard output: {compilation_result.StandardOutput}"
         printfn $"standard error: {compilation_result.StandardError}"
 
