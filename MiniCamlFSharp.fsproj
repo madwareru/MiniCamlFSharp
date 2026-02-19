@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <OutputType>WinExe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>mini_caml_fsharp</RootNamespace>
 
@@ -51,7 +52,9 @@
         <Compile Include="CmmConv.fs" />
         <Compile Include="CmmConvTests.fs" />
         <Compile Include="InterpreterTests.fs" />
+        <Compile Include="GenShared.fs" />
         <Compile Include="GenC.fs" />
+        <Compile Include="GenCSharp.fs" />
         <Compile Include="GenCTests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

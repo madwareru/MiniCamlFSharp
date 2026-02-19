@@ -16,6 +16,7 @@ open mini_caml_fsharp.Elimination
 open mini_caml_fsharp.ClosureRepresentationConv
 open mini_caml_fsharp.CmmConv
 open mini_caml_fsharp.GenC
+open mini_caml_fsharp.GenCSharp
 
 open System.IO
 open System.Diagnostics
@@ -148,6 +149,89 @@ let testGenC () =
         Assert.AreEqual(0, compilation_result.ExitCode)
 
         let result = executeShellCommand exe_file_path []
+        let output_expected = File.ReadAllText(output_expected_path)
+        Assert.AreEqual(0, result.ExitCode)
+        Assert.AreEqual(output_expected, result.StandardOutput)
+
+[<Test>]
+let testGenCSharp () =
+    let limit = 100
+    let rec iter n e =
+        printfn $"iteration %d{n}."
+        match n with
+        | 0 -> e
+        | _ ->
+            let e' = e |> BetaReduction.f
+            let e' = e' |> Assoc.f
+            let e' = e' |> Inlining.f 16
+            let e' = e' |> ConstFolding.f
+            let e' = e' |> Elimination.f
+            if e = e' then e' else iter (n - 1) e'
+
+    let tests = [
+        "tst1", Txt
+        "tst2", Txt
+        "tst3", Txt
+        "tst4", Txt
+        "tst5", Txt
+        "tst6", Txt
+        "tst7", Txt
+        "tst8", Txt
+        "tak", Txt
+        "loop_idiom", Txt
+        "mandelbrot", Txt
+        "mandelbrot2", Txt
+        "mandelbrot3", Txt
+        "mandelbrot_colored", Ppm
+    ]
+
+    for test_name, output_type in tests do
+        let cs_proj_directory = Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}"))
+        if not(Directory.Exists(cs_proj_directory)) then
+            Directory.CreateDirectory(cs_proj_directory) |> ignore
+        let cs_proj_file_path = Path.Combine(cs_proj_directory, $"{test_name}.csproj")
+        let cs_file_path = Path.Combine(cs_proj_directory, "Program.cs")
+        
+        let output_expected_path =
+            match output_type with
+            | Txt -> Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}_output.txt"))
+            | Ppm -> Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}_output.ppm"))
+        let source_path = Path.GetFullPath(Path.Combine("GenCTests", $"{test_name}.sexpr"))
+
+        printfn $"compiling {source_path}"
+        let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
+        Id.reset ()
+        let k_form =
+            source
+            |> SExpr.parse
+            |> Parsing.f
+            |> Typing.f Typing.ProgramShouldReturnUnit
+            |> KNormalisation.f
+            |> AlphaConv.f
+
+        let converted = (limit, k_form) ||> iter
+        let project_text, cs_text =
+            converted
+            |> ClosureRepresentationConv.f
+            |> CmmConv.f
+            |> GenCSharp.f test_name
+
+        printfn $"csharp generation is complete"
+        printfn $"writing csproj content to {cs_proj_file_path}"
+        File.WriteAllText(cs_proj_file_path, project_text)
+        
+        printfn $"writing Program.cs content to {cs_file_path}"
+        File.WriteAllText(cs_file_path, cs_text)
+
+        printfn $"compiling {cs_proj_directory}"
+        let compilation_result = executeShellCommand "dotnet" ["build"; "-c"; "Release"; cs_proj_directory]
+            
+        printfn $"standard output: {compilation_result.StandardOutput}"
+        printfn $"standard error: {compilation_result.StandardError}"
+
+        Assert.AreEqual(0, compilation_result.ExitCode)
+
+        let result = executeShellCommand "dotnet" ["run"; "-c"; "Release"; "--project"; cs_proj_directory]
         let output_expected = File.ReadAllText(output_expected_path)
         Assert.AreEqual(0, result.ExitCode)
         Assert.AreEqual(output_expected, result.StandardOutput)

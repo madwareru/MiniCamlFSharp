@@ -1,4 +1,4 @@
-module mini_caml_fsharp.GenC
+module mini_caml_fsharp.GenCSharp
 
 open mini_caml_fsharp.Id
 open mini_caml_fsharp.Type
@@ -6,199 +6,216 @@ open mini_caml_fsharp.M
 open mini_caml_fsharp.Cmm
 open mini_caml_fsharp.GenShared
 
-module GenC =
+module GenCSharp =
+    let private csproj_template =
+        @"<Project Sdk=""Microsoft.NET.Sdk"">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>##NAME_SPACE</RootNamespace>
+  </PropertyGroup>
+
+</Project>
+"
+
+    let private header_template =
+        @"using System;
+
+namespace ##NAME_SPACE;
+
+"
+
     let private std_prelude =
-        @"#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-typedef enum min_caml_tag {
-    UNIT_TAG,
-    INT_TAG,
-    FLOAT_TAG,
-    MEMORY_TAG,
-    FUNCTION_PTR_TAG
-} tag_t;
-typedef enum min_caml_unit { UNIT } u_t;
-
-struct min_caml_value;
-typedef struct min_caml_memory {
-    struct min_caml_value * v;
-    int64_t length;
-} mem_t;
-
-typedef struct min_caml_value {
-    tag_t tag;
-    union {
-        u_t u;
-        int64_t i;
-        double f;
-        mem_t m;
-        void* f_ptr;
-    };
-} v_t;
-static v_t min_caml_make_unit() {
-    v_t res = { .tag = UNIT_TAG, .u = UNIT };
-    return res;
-}
-static v_t min_caml_make_int(int i) {
-    v_t res = { .tag = INT_TAG, .i = i };
-    return res;
-}
-static v_t min_caml_make_float(double f) {
-    v_t res = { .tag = FLOAT_TAG, .f = f };
-    return res;
-}
-static v_t min_caml_make_f_ptr(void* f_ptr) {
-    v_t res = { .tag = FUNCTION_PTR_TAG, .f_ptr = f_ptr };
-    return res;
-}
-static v_t min_caml_alloc_vector(v_t count) {
-    if (count.i <= 0) {
-        printf(""can't allocate vector with size <= 0"");
-        exit(-1);
+        @"public static partial class TopLevel {
+    public enum u_t : long {
+        UNIT = 0
     }
 
-    v_t* res_v = (v_t*) malloc(sizeof(v_t) * (size_t) count.i);
-    if (!res_v) {
-        printf(""failed to allocate vector, die in panic, see ya!\n"");
-        exit(-1);
+    public struct mem_t {
+        public v_t[] v;
+        public long length;
     }
 
-    v_t v = min_caml_make_unit();
-    mem_t mem = { .length = count.i, .v = res_v };
-    v_t res = { .tag = MEMORY_TAG, .m = mem };
-    for(int64_t i = 0; i < count.i; i++) {
-        res.m.v[i] = v;
+    public abstract class v_t {
+        public sealed class UnitValue : v_t {
+            public u_t v;
+        }
+        public sealed class IntValue : v_t {
+            public long v;
+        }
+        public sealed class FloatValue : v_t {
+            public double v;
+        }
+        public sealed class MemoryValue : v_t {
+            public mem_t v;
+        }
+        public sealed class FPtrValue : v_t {
+            public Delegate v;
+        }
+        public u_t u => ((UnitValue)this).v;
+        public long i => ((IntValue)this).v;
+        public double f => ((FloatValue)this).v;
+        public mem_t m => ((MemoryValue)this).v;
+        public Delegate f_ptr => ((FPtrValue)this).v;
     }
-    return res;
-}
-static v_t min_caml_clone(v_t v) {
-    if (v.tag != MEMORY_TAG)
-        return v;
+    
+    static v_t min_caml_make_unit() => 
+        new v_t.UnitValue() { v = u_t.UNIT };
+        
+    static v_t min_caml_make_int(long i) =>
+        new v_t.IntValue() { v = i };
+        
+    static v_t min_caml_make_float(double f) =>
+        new v_t.FloatValue() { v = f};
+        
+    static v_t min_caml_make_f_ptr(Delegate f_ptr) =>
+        new v_t.FPtrValue() { v = f_ptr};
+        
+    static v_t min_caml_alloc_vector(v_t count) {
+        if (count.i <= 0) {
+            throw new ArgumentException(""can't allocate vector with size <= 0"");
+        }
+        v_t v = min_caml_make_unit();
+        mem_t mem = new() { length = count.i, v = new v_t[count.i] };
+        v_t res = new v_t.MemoryValue() { v = mem };
+        for(long i = 0; i < count.i; i++) {
+            res.m.v[i] = v;
+        }
+        return res;
+    }
+    
+    static v_t min_caml_clone(v_t v) {
+        if (v is not v_t.MemoryValue) 
+            return v;
+        v_t count = min_caml_make_int(v.m.length);
+        v_t res = min_caml_alloc_vector(count);
+        for(long i = 0; i < count.i; i++) {
+            res.m.v[i] = min_caml_clone(v.m.v[i]);
+        }
+        return res;
+    }
 
-    v_t count = min_caml_make_int(v.m.length);
-    v_t res = min_caml_alloc_vector(count);
-    for(int64_t i = 0; i < v.m.length; i++) {
-        res.m.v[i] = min_caml_clone(v.m.v[i]);
+    static v_t min_caml_create_array(v_t count, v_t v) {
+        v_t res = min_caml_alloc_vector(count);
+        for(long i = 0; i < count.i; i++) {
+            res.m.v[i] = min_caml_clone(v);
+        }
+        return res;
     }
-    return res;
-}
-static v_t min_caml_create_array(v_t count, v_t v) {
-    v_t res = min_caml_alloc_vector(count);
-    for(int64_t i = 0; i < count.i; i++) {
-        res.m.v[i] = min_caml_clone(v);
+    
+    static v_t min_caml_create_float_array(v_t count, v_t v) {
+        v_t res = min_caml_alloc_vector(count);
+        for(long i = 0; i < count.i; i++) {
+            res.m.v[i] = min_caml_make_float(v.f);
+        }
+        return res;
     }
-    return res;
-}
-static v_t min_caml_create_float_array(v_t count, v_t v) {
-    v_t res = min_caml_alloc_vector(count);
-    for(int64_t i = 0; i < count.i; i++) {
-        res.m.v[i].tag = FLOAT_TAG;
-        res.m.v[i].f = v.f;
+    
+    static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
+        switch(lhs) {
+            case v_t.UnitValue:
+                return min_caml_make_int(1);
+            case v_t.IntValue:
+                return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
+            case v_t.FloatValue:
+                return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
+            case v_t.FPtrValue:
+                return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
+            default:
+                for(long i = 0; i < lhs.m.length; i++) {
+                    v_t r = min_caml_less_eq(lhs.m.v[i], rhs.m.v[i]);
+                    if (r.i == 0)
+                        return r;
+                }
+                return min_caml_make_int(1);
+        }
     }
-    return res;
-}
-static v_t min_caml_float_of_int(v_t v) {
-    v_t res = min_caml_make_float((double) v.i);
-    return res;
-}
-static v_t min_caml_int_of_float(v_t v)  {
-    v_t res = min_caml_make_int((int64_t) v.f);
-    return res;
-}
-static v_t min_caml_print_int(v_t v) {
-    printf(""%lld"", v.i);
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_int_ln(v_t v) {
-    printf(""%lld\n"", v.i);
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_float(v_t v) {
-    printf(""%f"", v.f);
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_float_ln(v_t v) {
-    printf(""%f\n"", v.f);
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_bool(v_t v) {
-    if (v.i) {
-        printf(""true"");
-    } else {
-        printf(""false"");
+    static v_t min_caml_eq(v_t lhs, v_t rhs) {
+        switch(lhs) {
+            case v_t.UnitValue:
+                return min_caml_make_int(1);
+            case v_t.IntValue:
+                return min_caml_make_int(lhs.i == rhs.i ? 1 : 0);
+            case v_t.FloatValue:
+                return min_caml_make_int(Math.Abs(lhs.f - rhs.f) <= double.Epsilon ? 1 : 0);
+            case v_t.FPtrValue:
+                return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
+            default:
+                for(long i = 0; i < lhs.m.length; i++) {
+                    v_t r = min_caml_eq(lhs.m.v[i], rhs.m.v[i]);
+                    if (r.i == 0)
+                        return r;
+                }
+                return min_caml_make_int(1);
+        }
     }
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_bool_ln(v_t v) {
-    if (v.i) {
-        printf(""true\n"");
-    } else {
-        printf(""false\n"");
+    static v_t min_caml_float_of_int(v_t v) {
+        v_t res = min_caml_make_float(v.i);
+        return res;
     }
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_ln(v_t v_unused) {
-    printf(""\n"");
-    return min_caml_make_unit();
-}
-static v_t min_caml_print_tab(v_t v_unused) {
-    printf(""\t"");
-    return min_caml_make_unit();
-}
-static v_t min_caml_put_char(v_t v) {
-    putchar((char)(v.i & 0xFF));
-    return min_caml_make_unit();
-}
-static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
-    switch(lhs.tag) {
-        case UNIT_TAG:
-            return min_caml_make_int(1);
-        case INT_TAG:
-            return min_caml_make_int(lhs.i <= rhs.i ? 1 : 0);
-        case FLOAT_TAG:
-            return min_caml_make_int(lhs.f <= rhs.f ? 1 : 0);
-        case FUNCTION_PTR_TAG:
-            return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
-        default:
-            for(int64_t i = 0; i < lhs.m.length; i++) {
-                v_t r = min_caml_less_eq(lhs.m.v[i], rhs.m.v[i]);
-                if (!r.i)
-                    return r;
-            }
-            return min_caml_make_int(1);
+    static v_t min_caml_int_of_float(v_t v)  {
+        v_t res = min_caml_make_int((long) v.f);
+        return res;
     }
-}
-static v_t min_caml_eq(v_t lhs, v_t rhs) {
-    switch(lhs.tag) {
-        case UNIT_TAG:
-            return min_caml_make_int(1);
-        case INT_TAG:
-            return min_caml_make_int(lhs.i == rhs.i ? 1 : 0);
-        case FLOAT_TAG:
-            return min_caml_make_int(lhs.f == rhs.f ? 1 : 0);
-        case FUNCTION_PTR_TAG:
-            return min_caml_make_int(lhs.f_ptr == rhs.f_ptr ? 1 : 0);
-        default:
-            for(int64_t i = 0; i < lhs.m.length; i++) {
-                v_t r = min_caml_eq(lhs.m.v[i], rhs.m.v[i]);
-                if (!r.i)
-                    return r;
-            }
-            return min_caml_make_int(1);
+    static v_t min_caml_print_int(v_t v) {
+        Console.Write(v.i.ToString());
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_int_ln(v_t v) {
+        Console.WriteLine(v.i.ToString());
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_float(v_t v) {
+        Console.Write(v.f.ToString());
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_float_ln(v_t v) {
+        Console.WriteLine(v.f.ToString());
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_bool(v_t v) {
+        if (v.i != 0) {
+            Console.Write(""true"");
+        } else {
+            Console.Write(""false"");
+        }
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_bool_ln(v_t v) {
+        if (v.i != 0) {
+            Console.WriteLine(""true"");
+        } else {
+            Console.WriteLine(""false"");
+        }
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_ln(v_t v_unused) {
+        Console.WriteLine();
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_print_tab(v_t v_unused) {
+        Console.Write(""\t"");
+        return min_caml_make_unit();
+    }
+    static v_t min_caml_put_char(v_t v) {
+        Console.Write(((char)(v.i & 0xFF)).ToString());
+        return min_caml_make_unit();
     }
 }
 "
 
     let private std_epilogue =
-        @"int main(void) {
-    v_t program_result = min_caml_entry_point();
-    return 0;
+        @"public static class Program {
+    public static void Main() {
+        TopLevel.min_caml_entry_point();
+    }
 }
 "
 
-    let f (p: Cmm.program_t) =
-        let mutable text = std_prelude
+    let f name_space (p: Cmm.program_t) =
+        let mutable text = header_template.Replace("##NAME_SPACE", name_space)
+        text <- text + std_prelude
 
         let ls, ids, id_ts, l_ts = GenShared.gen_c_compliant_idents p
 
@@ -234,7 +251,7 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                         match a_t with
                         | Type.UnitType -> "true"
                         | Type.IntType -> $"%s{a'}.i == %s{b'}.i"
-                        | Type.FloatType -> $"%s{a'}.f == %s{b'}.f"
+                        | Type.FloatType -> $"Math.Abs(%s{a'}.f - %s{b'}.f) <= double.Epsilon"
                         | Type.FunType _ -> $"%s{a'}.f_ptr == %s{b'}.f_ptr"
                         | _ -> $"min_caml_eq(%s{a'}, %s{b'})"
 
@@ -392,12 +409,12 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                     match vs' with
                     | [] -> failwith "can't compile, functions with arity 0 not supported"
                     | x :: xs ->
-                        let mutable fn_type_str = "v_t (*)(v_t"
+                        let mutable fn_type_str = "Func<v_t"
 
                         for _ in 1 .. vs.Length do
                             fn_type_str <- $"{fn_type_str}, v_t"
 
-                        fn_type_str <- $"{fn_type_str})"
+                        fn_type_str <- $"{fn_type_str}, v_t>"
                         let mutable arg_list_str = $"%s{f_id'}, %s{x}"
 
                         for x_next in xs do
@@ -417,7 +434,7 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                         match a_t with
                         | Type.UnitType -> "true"
                         | Type.IntType -> $"%s{a'}.i == %s{b'}.i"
-                        | Type.FloatType -> $"%s{a'}.f == %s{b'}.f"
+                        | Type.FloatType -> $"Math.Abs(%s{a'}.f - %s{b'}.f) <= double.Epsilon"
                         | Type.FunType _ -> $"%s{a'}.f_ptr == %s{b'}.f_ptr"
                         | _ -> $"min_caml_eq(%s{a'}, %s{b'})"
 
@@ -514,12 +531,12 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                     match vs' with
                     | [] -> failwith "can't compile, functions with arity 0 not supported"
                     | x :: xs ->
-                        let mutable fn_type_str = "v_t (*)(v_t"
+                        let mutable fn_type_str = "Func<v_t"
 
                         for _ in 1 .. vs.Length do
                             fn_type_str <- $"{fn_type_str}, v_t"
 
-                        fn_type_str <- $"{fn_type_str})"
+                        fn_type_str <- $"{fn_type_str}, v_t>"
                         let mutable arg_list_str = $"%s{f_id'}, %s{x}"
 
                         for x_next in xs do
@@ -527,7 +544,7 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
 
                         cont (indentation, $"((%s{fn_type_str})%s{f_id'}.m.v[0].f_ptr)(%s{arg_list_str})")
 
-        let print_fn_general fdecl (fn: Cmm.fn_t) =
+        let print_fn (fn: Cmm.fn_t) =
             let find_id id =
                 match ids.TryFind id with
                 | Some id -> id
@@ -553,30 +570,25 @@ static v_t min_caml_eq(v_t lhs, v_t rhs) {
                 for x_orig_next, x_next, t_next in xs do
                     env <- env.Add x_orig_next (x_next, t_next)
                     arg_list_str <- $"%s{arg_list_str}, v_t /*%s{x_orig_next}*/ %s{x_next}"
+                
+                text <- text + $"    static v_t /*%s{l}*/ %s{l'}(%s{arg_list_str}) {{\n"
+                let cont = (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
+                ("        ", fn.body) ||> print_block env cont
+                text <- text + "    }\n"
 
-                if fdecl then
-                    text <- text + $"v_t /*%s{l}*/ %s{l'}(%s{arg_list_str});\n"
-                else
-                    text <- text + $"v_t /*%s{l}*/ %s{l'}(%s{arg_list_str}) {{\n"
-                    let cont = (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
-                    ("    ", fn.body) ||> print_block env cont
-                    text <- text + "}\n"
-
-        let print_fn = print_fn_general false
-        let print_fn_forward_decl = print_fn_general true
-
-        for fn in p.top_level_functions do
-            fn |> print_fn_forward_decl
-
+        text <- text + "public static partial class TopLevel {"
+        
         for fn in p.top_level_functions do
             fn |> print_fn
 
-        text <- text + "static v_t min_caml_entry_point(void) {\n"
+        text <- text + "    public static v_t min_caml_entry_point() {\n"
         let cont = (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
-        ("    ", p.entry) ||> print_block (M.Empty()) cont
+        ("        ", p.entry) ||> print_block (M.Empty()) cont
+        text <- text + "    }\n"
+        
         text <- text + "}\n"
 
         text <- text + std_epilogue
 
-        text
+        csproj_template.Replace("##NAME_SPACE", name_space), text
 
