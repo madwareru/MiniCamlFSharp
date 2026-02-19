@@ -32,26 +32,35 @@ namespace ##NAME_SPACE;
         UNIT = 0
     }
 
-    public struct mem_t {
-        public v_t[] v;
-        public long length;
+    public readonly struct mem_t {
+        public readonly v_t[] v;
+        public readonly long length;
+        public mem_t(v_t[] v, long length) {
+            this.v = v;
+            this.length = length;
+        }
     }
 
     public abstract class v_t {
         public sealed class UnitValue : v_t {
-            public u_t v;
+            public readonly u_t v;
+            public UnitValue() => this.v = u_t.UNIT;
         }
         public sealed class IntValue : v_t {
-            public long v;
+            public readonly long v;
+            public IntValue(long v) => this.v = v;
         }
         public sealed class FloatValue : v_t {
-            public double v;
+            public readonly double v;
+            public FloatValue(double v) => this.v = v;
         }
         public sealed class MemoryValue : v_t {
-            public mem_t v;
+            public readonly mem_t v;
+            public MemoryValue(mem_t v) => this.v = v;
         }
         public sealed class FPtrValue : v_t {
-            public Delegate v;
+            public readonly Delegate v;
+            public FPtrValue(Delegate v) => this.v = v;
         }
         public u_t u => ((UnitValue)this).v;
         public long i => ((IntValue)this).v;
@@ -61,24 +70,24 @@ namespace ##NAME_SPACE;
     }
     
     static v_t min_caml_make_unit() => 
-        new v_t.UnitValue() { v = u_t.UNIT };
+        new v_t.UnitValue();
         
     static v_t min_caml_make_int(long i) =>
-        new v_t.IntValue() { v = i };
+        new v_t.IntValue(i);
         
     static v_t min_caml_make_float(double f) =>
-        new v_t.FloatValue() { v = f};
+        new v_t.FloatValue(f);
         
     static v_t min_caml_make_f_ptr(Delegate f_ptr) =>
-        new v_t.FPtrValue() { v = f_ptr};
+        new v_t.FPtrValue(f_ptr);
         
     static v_t min_caml_alloc_vector(v_t count) {
         if (count.i <= 0) {
             throw new ArgumentException(""can't allocate vector with size <= 0"");
         }
         v_t v = min_caml_make_unit();
-        mem_t mem = new() { length = count.i, v = new v_t[count.i] };
-        v_t res = new v_t.MemoryValue() { v = mem };
+        mem_t mem = new(new v_t[count.i], count.i);
+        v_t res = new v_t.MemoryValue(mem);
         for(long i = 0; i < count.i; i++) {
             res.m.v[i] = v;
         }
