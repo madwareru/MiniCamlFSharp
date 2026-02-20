@@ -68,19 +68,19 @@ namespace ##NAME_SPACE;
         public mem_t m => ((MemoryValue)this).v;
         public Delegate f_ptr => ((FPtrValue)this).v;
     }
-    
-    static v_t min_caml_make_unit() => 
+
+    static v_t min_caml_make_unit() =>
         new v_t.UnitValue();
-        
+
     static v_t min_caml_make_int(long i) =>
         new v_t.IntValue(i);
-        
+
     static v_t min_caml_make_float(double f) =>
         new v_t.FloatValue(f);
-        
+
     static v_t min_caml_make_f_ptr(Delegate f_ptr) =>
         new v_t.FPtrValue(f_ptr);
-        
+
     static v_t min_caml_alloc_vector(v_t count) {
         if (count.i <= 0) {
             throw new ArgumentException(""can't allocate vector with size <= 0"");
@@ -93,9 +93,9 @@ namespace ##NAME_SPACE;
         }
         return res;
     }
-    
+
     static v_t min_caml_clone(v_t v) {
-        if (v is not v_t.MemoryValue) 
+        if (v is not v_t.MemoryValue)
             return v;
         v_t count = min_caml_make_int(v.m.length);
         v_t res = min_caml_alloc_vector(count);
@@ -112,7 +112,7 @@ namespace ##NAME_SPACE;
         }
         return res;
     }
-    
+
     static v_t min_caml_create_float_array(v_t count, v_t v) {
         v_t res = min_caml_alloc_vector(count);
         for(long i = 0; i < count.i; i++) {
@@ -120,7 +120,7 @@ namespace ##NAME_SPACE;
         }
         return res;
     }
-    
+
     static v_t min_caml_less_eq(v_t lhs, v_t rhs) {
         switch(lhs) {
             case v_t.UnitValue:
@@ -579,14 +579,14 @@ namespace ##NAME_SPACE;
                 for x_orig_next, x_next, t_next in xs do
                     env <- env.Add x_orig_next (x_next, t_next)
                     arg_list_str <- $"%s{arg_list_str}, v_t /*%s{x_orig_next}*/ %s{x_next}"
-                
+
                 text <- text + $"    static v_t /*%s{l}*/ %s{l'}(%s{arg_list_str}) {{\n"
                 let cont = (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
                 ("        ", fn.body) ||> print_block env cont
                 text <- text + "    }\n"
 
-        text <- text + "public static partial class TopLevel {"
-        
+        text <- text + "public static partial class TopLevel {\n"
+
         for fn in p.top_level_functions do
             fn |> print_fn
 
@@ -594,10 +594,9 @@ namespace ##NAME_SPACE;
         let cont = (fun (indent, s) -> text <- text + $"%s{indent}return %s{s};\n")
         ("        ", p.entry) ||> print_block (M.Empty()) cont
         text <- text + "    }\n"
-        
+
         text <- text + "}\n"
 
         text <- text + std_epilogue
 
         csproj_template.Replace("##NAME_SPACE", name_space), text
-
