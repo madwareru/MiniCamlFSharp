@@ -1,10 +1,10 @@
 module mini_caml_fsharp.Program
 
 open Microsoft.FSharp.Core
-open mini_caml_fsharp.GenShared
-open mini_caml_fsharp.GenC
-open mini_caml_fsharp.GenCSharp
-open mini_caml_fsharp.Typing
+open mini_caml_fsharp_core.GenShared
+open mini_caml_fsharp_core.GenC
+open mini_caml_fsharp_core.GenCSharp
+open mini_caml_fsharp_core.Typing
 
 open System.IO
 

@@ -11,139 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="ParserCombinators.fs" />
-        <Compile Include="SExpr.fs" />
-        <Compile Include="SExprTests.fs" />
-        <Compile Include="Type.fs" />
-        <Compile Include="Id.fs" />
-        <Compile Include="M.fs" />
-        <Compile Include="S.fs" />
-        <Compile Include="InterpreterShared.fs" />
-        <Compile Include="STests.fs" />
-        <Compile Include="Syntax.fs" />
-        <Compile Include="Parsing.fs" />
-        <Compile Include="ParsingTests.fs" />
-        <Compile Include="Typing.fs" />
-        <Compile Include="UnificationTests.fs" />
-        <Compile Include="TypingTests.fs" />
-        <Compile Include="KNorm.fs" />
-        <Compile Include="KNormInterpreter.fs" />
-        <Compile Include="KNormalisation.fs" />
-        <Compile Include="KNormalisationTests.fs" />
-        <Compile Include="AlphaConv.fs" />
-        <Compile Include="AlphaConvTests.fs" />
-        <Compile Include="BetaReduction.fs" />
-        <Compile Include="BetaReductionTests.fs" />
-        <Compile Include="Assoc.fs" />
-        <Compile Include="AssocTests.fs" />
-        <Compile Include="Inlining.fs" />
-        <Compile Include="InliningTests.fs" />
-        <Compile Include="ConstFolding.fs" />
-        <Compile Include="ConstFoldingTests.fs" />
-        <Compile Include="Elimination.fs" />
-        <Compile Include="EliminationTests.fs" />
-        <Compile Include="KOptimizationTests.fs" />
-        <Compile Include="ClosureRepresentation.fs" />
-        <Compile Include="ClosureRepresentationInterpreter.fs" />
-        <Compile Include="ClosureRepresentationConv.fs" />
-        <Compile Include="ClosureRepresentationConvTests.fs" />
-        <Compile Include="Cmm.fs" />
-        <Compile Include="CmmInterpreter.fs" />
-        <Compile Include="CmmConv.fs" />
-        <Compile Include="CmmConvTests.fs" />
-        <Compile Include="InterpreterTests.fs" />
-        <Compile Include="GenShared.fs" />
-        <Compile Include="GenC.fs" />
-        <Compile Include="GenCSharp.fs" />
-        <Compile Include="GenCTests.fs" />
         <Compile Include="Program.fs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="GenCTests\tst1.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst1_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst2.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst2_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst3.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst3_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst4.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst4_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst5.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst5_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst6.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst6_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst7.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst7_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst8.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tst8_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tak.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\tak_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\loop_idiom.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\loop_idiom_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot2.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot2_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot3.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot3_output.txt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot_colored.sexpr">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Include="GenCTests\mandelbrot_colored_output.ppm">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -152,6 +20,10 @@
         <PackageReference Include="NUnit" Version="3.14.0" />
         <PackageReference Include="NUnit.Analyzers" Version="3.9.0" />
         <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="MiniCamlFSharpCore\MiniCamlFSharpCore.fsproj" />
     </ItemGroup>
 
 </Project>
