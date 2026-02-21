@@ -4,6 +4,7 @@ open Microsoft.FSharp.Core
 open mini_caml_fsharp.GenShared
 open mini_caml_fsharp.GenC
 open mini_caml_fsharp.GenCSharp
+open mini_caml_fsharp.Typing
 
 open System.IO
 
@@ -16,7 +17,9 @@ let main args =
     let mutable target = C
     let mutable file_name = ""
     let mutable build_directory = Path.GetFullPath("mini_caml_fsharp_build")
-    let pre_gen_settings = { GenShared.inlining_threshold = 16; GenShared.optimization_loop_limit = 100 }
+    let pre_gen_settings = { GenShared.inlining_threshold = 16
+                             GenShared.optimization_loop_limit = 100
+                             GenShared.typing_rule = Typing.ProgramShouldReturnUnit }
     for arg in args do
         if arg = "/target:CSharp" then
             target <- CSharp

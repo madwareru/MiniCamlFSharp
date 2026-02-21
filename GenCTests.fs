@@ -5,6 +5,7 @@ open NUnit.Framework
 open mini_caml_fsharp.GenShared
 open mini_caml_fsharp.GenC
 open mini_caml_fsharp.GenCSharp
+open mini_caml_fsharp.Typing
 
 open System.IO
 open System.Diagnostics
@@ -91,7 +92,9 @@ let testGenC () =
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
         let res_text =
-            GenShared.pre_gen source { inlining_threshold = 16; optimization_loop_limit = 100 }
+            GenShared.pre_gen source { inlining_threshold = 16
+                                       optimization_loop_limit = 100
+                                       typing_rule = Typing.ProgramShouldReturnUnit}
             |> GenC.f
 
         printfn $"c generation is complete, writing to {c_file_path}"
@@ -152,7 +155,9 @@ let testGenCSharp () =
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
         
         let project_text, cs_text =
-            GenShared.pre_gen source { inlining_threshold = 16; optimization_loop_limit = 100 }
+            GenShared.pre_gen source { inlining_threshold = 16
+                                       optimization_loop_limit = 100
+                                       typing_rule = Typing.ProgramShouldReturnUnit }
             |> GenCSharp.f test_name
 
         printfn $"csharp generation is complete"

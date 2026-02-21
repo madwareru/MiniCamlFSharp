@@ -83,18 +83,19 @@ module GenShared =
 
         env_labels, env_ids, env_id_ts, env_l_ts
         
-    type PreGenerationSettings =
+    type pre_gen_settings_t =
         { mutable inlining_threshold: int
           mutable optimization_loop_limit: int
+          mutable typing_rule : Typing.program_output_typing_rule_t
         }
         
-    let pre_gen source (settings : PreGenerationSettings) =
+    let pre_gen source (settings : pre_gen_settings_t) =
         Id.reset ()
         let k_form =
             source
             |> SExpr.parse
             |> Parsing.f
-            |> Typing.f Typing.ProgramShouldReturnUnit
+            |> Typing.f settings.typing_rule
             |> KNormalisation.f
             |> AlphaConv.f
             

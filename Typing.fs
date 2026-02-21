@@ -12,12 +12,26 @@ module Typing =
     type TypingErrorInfo = { expr: t; lhs: Type.t; rhs: Type.t }
     exception TypingException of TypingErrorInfo
 
-    type program_output_typing_rule =
+    type program_output_typing_rule_t =
         | ProgramShouldReturnUnit
         | ProgramShouldNotReturnFunction
 
     // "Внешние" переменные
-    let extenv: Type.t M ref = ref (M.Empty())
+    let ext_env: Type.t M =
+        M.Empty()
+            .AddList [
+                "int_of_float", Type.FunType([ Type.FloatType ], Type.IntType)
+                "float_of_int", Type.FunType([ Type.IntType ], Type.FloatType)
+                "print_int", Type.FunType([ Type.IntType ], Type.UnitType)
+                "print_int_ln", Type.FunType([ Type.IntType ], Type.UnitType)
+                "print_float", Type.FunType([ Type.FloatType ], Type.UnitType)
+                "print_float_ln", Type.FunType([ Type.FloatType ], Type.UnitType)
+                "print_bool", Type.FunType([ Type.BoolType ], Type.UnitType)
+                "print_bool_ln", Type.FunType([ Type.BoolType ], Type.UnitType)
+                "print_ln", Type.FunType([ Type.UnitType ], Type.UnitType)
+                "print_tab", Type.FunType([ Type.UnitType ], Type.UnitType)
+                "put_char", Type.FunType([ Type.IntType ], Type.UnitType)
+            ]
 
     /// <summary>
     /// Функция, которая заменяет переменные типов их содержимым. Замена происходит рекурсивно.
@@ -336,27 +350,14 @@ module Typing =
                 match env.TryFind name with
                 | Some t -> t
                 | _ ->
-                    match extenv.Value.TryFind name with
+                    match ext_env.TryFind name with
                     | Some t -> t
                     | _ -> failwith $"variable %s{name} not found."
         with UnifyException(t1, t2) ->
             raise (TypingException { expr = e; lhs = t1; rhs = t2 })
 
-    let f (typing_rule: program_output_typing_rule) e =
-        extenv.Value <- M.Empty()
-        extenv.Value <- extenv.Value.Add "int_of_float" (Type.FunType([ Type.FloatType ], Type.IntType))
-        extenv.Value <- extenv.Value.Add "float_of_int" (Type.FunType([ Type.IntType ], Type.FloatType))
-        extenv.Value <- extenv.Value.Add "print_int" (Type.FunType([ Type.IntType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_int_ln" (Type.FunType([ Type.IntType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_float" (Type.FunType([ Type.FloatType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_float_ln" (Type.FunType([ Type.FloatType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_bool" (Type.FunType([ Type.BoolType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_bool_ln" (Type.FunType([ Type.BoolType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_ln" (Type.FunType([ Type.UnitType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "print_tab" (Type.FunType([ Type.UnitType ], Type.UnitType))
-        extenv.Value <- extenv.Value.Add "put_char" (Type.FunType([ Type.IntType ], Type.UnitType))
+    let f (typing_rule: program_output_typing_rule_t) e =        
         let expr_type = e |> infer (M.Empty())
-        extenv.Value <- extenv.Value.Map(fun _ -> deref_typ)
 
         match typing_rule, deref_typ expr_type with
         | ProgramShouldReturnUnit, Type.UnitType -> deref_term e

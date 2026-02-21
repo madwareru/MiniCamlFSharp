@@ -121,7 +121,7 @@ module KNormalisation =
 
             bind [] [] exs
         | Syntax.ApplyNode(Syntax.VarNode f, exs) when (env.TryFind f).IsNone ->
-            match Typing.extenv.Value.TryFind f with
+            match Typing.ext_env.TryFind f with
             | Some(Type.FunType(_, t)) ->
                 let rec bind ids =
                     function
