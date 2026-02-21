@@ -1,19 +1,7 @@
 module mini_caml_fsharp.Program
 
 open Microsoft.FSharp.Core
-open mini_caml_fsharp.SExpr
-open mini_caml_fsharp.Id
-open mini_caml_fsharp.Parsing
-open mini_caml_fsharp.Typing
-open mini_caml_fsharp.KNormalisation
-open mini_caml_fsharp.AlphaConv
-open mini_caml_fsharp.BetaReduction
-open mini_caml_fsharp.Assoc
-open mini_caml_fsharp.Inlining
-open mini_caml_fsharp.ConstFolding
-open mini_caml_fsharp.Elimination
-open mini_caml_fsharp.ClosureRepresentationConv
-open mini_caml_fsharp.CmmConv
+open mini_caml_fsharp.GenShared
 open mini_caml_fsharp.GenC
 open mini_caml_fsharp.GenCSharp
 
@@ -28,6 +16,7 @@ let main args =
     let mutable target = C
     let mutable file_name = ""
     let mutable build_directory = Path.GetFullPath("mini_caml_fsharp_build")
+    let pre_gen_settings = { GenShared.inlining_threshold = 16; GenShared.optimization_loop_limit = 100 }
     for arg in args do
         if arg = "/target:CSharp" then
             target <- CSharp
@@ -42,33 +31,7 @@ let main args =
         printfn $"compiling the file {file_name} for {target} target"
         
         let source = File.ReadAllText(file_name).Replace("\r\n", "\n")
-        Id.reset ()
-        let k_form =
-            source
-            |> SExpr.parse
-            |> Parsing.f
-            |> Typing.f Typing.ProgramShouldReturnUnit
-            |> KNormalisation.f
-            |> AlphaConv.f
-            
-        let limit = 100
-        let rec iter n e =
-            printfn $"iteration %d{n}."
-            match n with
-            | 0 -> e
-            | _ ->
-                let e' = e |> BetaReduction.f
-                let e' = e' |> Assoc.f
-                let e' = e' |> Inlining.f 16
-                let e' = e' |> ConstFolding.f
-                let e' = e' |> Elimination.f
-                if e = e' then e' else iter (n - 1) e'
-
-        let converted = (limit, k_form) ||> iter
-        let cmm_program =
-            converted
-            |> ClosureRepresentationConv.f
-            |> CmmConv.f
+        let cmm_program = GenShared.pre_gen source pre_gen_settings
             
         let name_space = Path.GetFileNameWithoutExtension(file_name)
         match target with

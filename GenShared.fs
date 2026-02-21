@@ -3,6 +3,18 @@ module mini_caml_fsharp.GenShared
 open mini_caml_fsharp.Cmm
 open mini_caml_fsharp.M
 open mini_caml_fsharp.Id
+open mini_caml_fsharp.SExpr
+open mini_caml_fsharp.Parsing
+open mini_caml_fsharp.Typing
+open mini_caml_fsharp.KNormalisation
+open mini_caml_fsharp.AlphaConv
+open mini_caml_fsharp.BetaReduction
+open mini_caml_fsharp.Assoc
+open mini_caml_fsharp.Inlining
+open mini_caml_fsharp.ConstFolding
+open mini_caml_fsharp.Elimination
+open mini_caml_fsharp.ClosureRepresentationConv
+open mini_caml_fsharp.CmmConv
 
 module GenShared =
     let gen_c_compliant_idents (p: Cmm.program_t) =
@@ -70,3 +82,35 @@ module GenShared =
         visit_block p.entry
 
         env_labels, env_ids, env_id_ts, env_l_ts
+        
+    type PreGenerationSettings =
+        { mutable inlining_threshold: int
+          mutable optimization_loop_limit: int
+        }
+        
+    let pre_gen source (settings : PreGenerationSettings) =
+        Id.reset ()
+        let k_form =
+            source
+            |> SExpr.parse
+            |> Parsing.f
+            |> Typing.f Typing.ProgramShouldReturnUnit
+            |> KNormalisation.f
+            |> AlphaConv.f
+            
+        let rec iter n e =
+            printfn $"iteration %d{n}."
+            match n with
+            | 0 -> e
+            | _ ->
+                let e' = e |> BetaReduction.f
+                let e' = e' |> Assoc.f
+                let e' = e' |> Inlining.f settings.inlining_threshold
+                let e' = e' |> ConstFolding.f
+                let e' = e' |> Elimination.f
+                if e = e' then e' else iter (n - 1) e'
+
+        (settings.optimization_loop_limit, k_form)
+            ||> iter
+            |> ClosureRepresentationConv.f
+            |> CmmConv.f

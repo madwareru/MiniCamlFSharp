@@ -2,19 +2,7 @@ module mini_caml_fsharp.GenCTests
 
 open Microsoft.FSharp.Core
 open NUnit.Framework
-open mini_caml_fsharp.SExpr
-open mini_caml_fsharp.Id
-open mini_caml_fsharp.Parsing
-open mini_caml_fsharp.Typing
-open mini_caml_fsharp.KNormalisation
-open mini_caml_fsharp.AlphaConv
-open mini_caml_fsharp.BetaReduction
-open mini_caml_fsharp.Assoc
-open mini_caml_fsharp.Inlining
-open mini_caml_fsharp.ConstFolding
-open mini_caml_fsharp.Elimination
-open mini_caml_fsharp.ClosureRepresentationConv
-open mini_caml_fsharp.CmmConv
+open mini_caml_fsharp.GenShared
 open mini_caml_fsharp.GenC
 open mini_caml_fsharp.GenCSharp
 
@@ -74,19 +62,6 @@ let executeShellCommand exec args =
 
 [<Test>]
 let testGenC () =
-    let limit = 100
-    let rec iter n e =
-        printfn $"iteration %d{n}."
-        match n with
-        | 0 -> e
-        | _ ->
-            let e' = e |> BetaReduction.f
-            let e' = e' |> Assoc.f
-            let e' = e' |> Inlining.f 16
-            let e' = e' |> ConstFolding.f
-            let e' = e' |> Elimination.f
-            if e = e' then e' else iter (n - 1) e'
-
     let tests = [
         "tst1", Txt
         "tst2", Txt
@@ -115,20 +90,8 @@ let testGenC () =
 
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
-        Id.reset ()
-        let k_form =
-            source
-            |> SExpr.parse
-            |> Parsing.f
-            |> Typing.f Typing.ProgramShouldReturnUnit
-            |> KNormalisation.f
-            |> AlphaConv.f
-
-        let converted = (limit, k_form) ||> iter
         let res_text =
-            converted
-            |> ClosureRepresentationConv.f
-            |> CmmConv.f
+            GenShared.pre_gen source { inlining_threshold = 16; optimization_loop_limit = 100 }
             |> GenC.f
 
         printfn $"c generation is complete, writing to {c_file_path}"
@@ -155,19 +118,6 @@ let testGenC () =
 
 [<Test>]
 let testGenCSharp () =
-    let limit = 100
-    let rec iter n e =
-        printfn $"iteration %d{n}."
-        match n with
-        | 0 -> e
-        | _ ->
-            let e' = e |> BetaReduction.f
-            let e' = e' |> Assoc.f
-            let e' = e' |> Inlining.f 16
-            let e' = e' |> ConstFolding.f
-            let e' = e' |> Elimination.f
-            if e = e' then e' else iter (n - 1) e'
-
     let tests = [
         "tst1", Txt
         "tst2", Txt
@@ -200,20 +150,9 @@ let testGenCSharp () =
 
         printfn $"compiling {source_path}"
         let source = File.ReadAllText(source_path).Replace("\r\n", "\n")
-        Id.reset ()
-        let k_form =
-            source
-            |> SExpr.parse
-            |> Parsing.f
-            |> Typing.f Typing.ProgramShouldReturnUnit
-            |> KNormalisation.f
-            |> AlphaConv.f
-
-        let converted = (limit, k_form) ||> iter
+        
         let project_text, cs_text =
-            converted
-            |> ClosureRepresentationConv.f
-            |> CmmConv.f
+            GenShared.pre_gen source { inlining_threshold = 16; optimization_loop_limit = 100 }
             |> GenCSharp.f test_name
 
         printfn $"csharp generation is complete"
