@@ -1,76 +1,104 @@
 ﻿@page "/SExprParser"
 
-<PageTitle>Парсер S-выражений</PageTitle>
+<PageTitle>Разбор S-выражений</PageTitle>
 
-<div style="display: grid; grid-template-rows: auto 1fr; height: 100vh; margin: 0; padding: 1rem;">
-    <!-- Верхняя часть с описанием -->
-    <div>
-        <h1>Парсер S-выражений</h1>
-        <p>
-            Первая стадия компиляции заключается в разборе S-выражений из текста.
-            <br/>
-            S-выражения представляют из себя либо атом, к которому можно отнести 
-            целое число, число с плавающей точкой, литерал булевого значения или 
-            текстовый идентификатор произвольного вида, либо список из вложенных 
-            S-выражений, разделённых пробельными символами и обрамлённых круглыми 
-            скобками. Список может быть пуст.
-            <br/>
-            <code>
-                SExpr ::= <br/>
-                | {IntegerLiteral} // 123456 <br/>
-                | {FloatLiteral}   // 123.456 <br/>
-                | {BooleanLiteral} // #t или #f <br/>
-                | {Identifier}     // кстати,это-валидный-идентификатор! <br/>
-                | '(' {SExpr}* ')' // (1 (+ 2 3) #t где-я?) <br/> 
-            </code>
-            <br/>
-            В данном демонстрационном окне можно ввести S-выражение в поле 
-            ввода и попробовать его разобрать. При успешном разборе вы увидите в окне 
-            справа разобранное представление S-выражения, в противном случае вы увидите 
-            сообщение об ошибке синтаксического разбора.
-        </p>
+<div class="row">
+    <h1>Разбор S-выражений</h1>
+    <p>
+        Первая стадия компиляции заключается в разборе S-выражений из текста.
+        <br/><br/>
+        Исходник --> Разбор S-выражений --> <b>S-выражение (Вы тут)</b>
+        <br/><br/>
+        S-выражения представляют из себя либо атом, к которому можно отнести 
+        целое число, число с плавающей точкой, литерал булевого значения или 
+        текстовый идентификатор произвольного вида, либо список из вложенных 
+        S-выражений, разделённых пробельными символами и обрамлённых круглыми 
+        скобками. Список может быть пуст.
+        <br/><br/>
+        <code>
+            SExpr ::= <br/>
+            | {IntegerLiteral} // 123456 <br/>
+            | {FloatLiteral}   // 123.456 <br/>
+            | {BooleanLiteral} // #t или #f <br/>
+            | {Identifier}     // кстати,это-валидный-идентификатор! <br/>
+            | '(' {SExpr}* ')' // (1 (+ 2 3) #t где-я?) <br/> 
+        </code>
+        <br/><br/>
+        В данном демонстрационном окне можно ввести S-выражение в поле 
+        ввода и попробовать его разобрать. При успешном разборе вы увидите в окне 
+        справа разобранное представление S-выражения, в противном случае вы увидите 
+        сообщение об ошибке синтаксического разбора.
+        <br/>
+    </p>
+</div>
+
+
+<div class="row" style="min-height: 75px">
+    <div class="col-md-9">
+        <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
+            <option value="">-- Выберите демонстрационный пример --</option>
+            <option value="1">Демо 1. Ветвления</option>
+            <option value="2">Демо 2. Простые функции</option>
+            <option value="3">Демо 3. Fibonacci</option>
+            <option value="4">Демо 4. Tail rec fib</option>
+        </select>
     </div>
+    <div class="col">
+        <button class="btn btn-outline-secondary" @onclick="LoadSelection">Загрузить</button>
+    </div>
+    <div class="col">
+        <button class="btn btn-outline-secondary" @onclick="ClearInput">Очистить</button>
+    </div>
+</div>
 
-    <!-- Нижняя часть с редактором и результатом, занимающая оставшееся пространство -->
-    <div style="display: flex; flex-direction: column; min-height: 0; margin-top: 1rem;">
-        <div style="display: flex; flex-direction: row; flex: 1; min-height: 0;">
-            <!-- Левая колонка -->
-            <div style="display: flex; flex-direction: column; width: 41.66667%; padding-right: 0.5rem;">
-                <p role="status" style="margin-bottom: 0.5rem;">Исходный текст:</p>
-                <InputTextArea @bind-Value="SrcText" 
-                               class="form-control" 
-                               style="resize: none; flex: 1; min-height: 0; width: 100%;"/>
-            </div>
-            
-            <!-- Центральная колонка с кнопкой -->
-            <div style="display: flex; width: 16.66667%; align-items: center; justify-content: center;">
-                <button class="btn btn-primary" @onclick="TryParse">Разобрать код</button>
-            </div>
-            
-            <!-- Правая колонка -->
-            <div style="display: flex; flex-direction: column; width: 41.66667%; padding-left: 0.5rem;">
-                <p role="status" style="margin-bottom: 0.5rem;">Разобранный текст:</p>
-                <pre class="border p-2" 
-                     style="flex: 1; min-height: 0; margin: 0; overflow-y: auto; white-space: pre-wrap; width: 100%;">@ParsedText</pre>
-            </div>
+<div class="row">
+    <div class="col-md-5">
+        <div class="row justify-content-center">Исходный текст:</div>
+        <InputTextArea 
+            @bind-Value="_srcText" 
+            class="form-control"
+            style="min-height: 200px"/>
+    </div>
+    
+    <div class="col-md-2 justify-content-center">
+        <div class="row justify-content-center">
+            <button class="btn btn-primary" @onclick="TryParse"> Разобрать текст </button>
         </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="row justify-content-center">Разобранный текст:</div>
+        <pre 
+            class="border"
+            style="min-height: 200px;
+                   overflow-y: auto;
+                   margin: 0;
+                   white-space: pre-wrap;"
+        >@_parsedText</pre>
     </div>
 </div>
 
 @code {
-    private string SrcText = "";
-    private string ParsedText = "";
+    private string _srcText = "";
+    private string _parsedText = "";
+    private string _selectedDemo = "";
+    
+    private void ChangeSelection(ChangeEventArgs e) => _selectedDemo = e.Value?.ToString() ?? "";
+
+    private void LoadSelection() => _srcText = DemoProgramProvider.GetDemoText(_selectedDemo);
+
+    private void ClearInput() => _srcText = "";
 
     private void TryParse()
     {
         try
         {
-            var sExpr = mini_caml_fsharp_core.SExpr.SExpr.parse(SrcText);
-            ParsedText = sExpr.ToString();
+            var sExpr = mini_caml_fsharp_core.SExpr.SExpr.parse(_srcText);
+            _parsedText = sExpr.ToString();
         }
         catch (Exception exception)
         {
-            ParsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
+            _parsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
         }
     }
 }

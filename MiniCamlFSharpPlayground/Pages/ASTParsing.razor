@@ -1,0 +1,121 @@
+@page "/ASTParsing"
+@using mini_caml_fsharp_core
+
+<PageTitle>Разбор в AST</PageTitle>
+
+<div class="row">
+    <h1>Разбор в AST</h1>
+    <p>
+        Вторая стадия разбирает S-выражения в абстрактный синтаксис языка.
+        <br/><br/>
+        S-Выражение --> Разбор в AST --> <b>AST (Вы тут)</b>
+        <br/><br/>
+        После того как было успешно разобрано S-выражение, инициируется рекурсивное
+        сопоставление этого выражения с образцами, соответствующими синтаксическим формам
+        языка MiniCamlFSharp.
+        <br/><br/>
+        В данном демонстрационном окне можно ввести S-выражение в поле ввода и попробовать 
+        его разобрать сначала в S-выражение, а затем в AST, нажав на кнопку "Разобрать текст". 
+        При успешном разборе вы увидите в окне справа разобранное представление абстрактного 
+        синтаксического дерева (без выведенных типов для объявлений связанных имён), в противном 
+        случае вы увидите сообщение об ошибке синтаксического разбора.
+        <br/><br/>
+        По нажатии на кнопку "Вывести типы" произойдут те же действия, но помимо этого 
+        запустится дополнительный проход вывода типов. Данный проход обсулуживает сразу две
+        цели -- посредством механизма, называемого унификацией, будут выведены типы для объявлений
+        связанных имён, а так же будет произведена проверка типов для выражений, и если будет
+        обнаружено несоответствие типов или будет невозможно вывести тип, будет написано сообщение
+        об ошибке.
+        <br/>
+    </p>
+</div>
+
+<div class="row" style="min-height: 75px">
+    <div class="col-md-9">
+        <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
+            <option value="">-- Выберите демонстрационный пример --</option>
+            <option value="1">Демо 1. Ветвления</option>
+            <option value="2">Демо 2. Простые функции</option>
+            <option value="3">Демо 3. Fibonacci</option>
+            <option value="4">Демо 4. Tail rec fib</option>
+        </select>
+    </div>
+    <div class="col">
+        <button class="btn btn-outline-secondary" @onclick="LoadSelection">Загрузить</button>
+    </div>
+    <div class="col">
+        <button class="btn btn-outline-secondary" @onclick="ClearInput">Очистить</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="row justify-content-center">Исходный текст:</div>
+        <InputTextArea 
+            @bind-Value="_srcText" 
+            class="form-control"
+            style="min-height: 200px"/>
+    </div>
+    
+    <div class="col-md-2 justify-content-center">
+        <div class="row justify-content-center">
+            <button class="btn btn-primary" @onclick="TryParse"> Разобрать текст </button>
+            <button class="btn btn-primary" @onclick="InferTypes"> Вывести типы </button>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="row justify-content-center">Разобранный текст:</div>
+        <pre 
+            class="border"
+            style="min-height: 200px;
+                   overflow-y: auto;
+                   margin: 0;
+                   white-space: pre-wrap;"
+        >@_parsedText</pre>
+    </div>
+</div>
+
+@code {
+    private string _srcText = "";
+    private string _parsedText = "";
+    private string _selectedDemo = "";
+
+    private void ChangeSelection(ChangeEventArgs e) => _selectedDemo = e.Value?.ToString() ?? "";
+
+    private void LoadSelection() => _srcText = DemoProgramProvider.GetDemoText(_selectedDemo);
+
+    private void ClearInput() => _srcText = "";
+
+    private void TryParse()
+    {
+        try
+        {
+            var sExpr = SExpr.SExpr.parse(_srcText);
+            var ast = Parsing.Parsing.f(sExpr);
+            _parsedText = ast.ToString();
+        }
+        catch (Exception exception)
+        {
+            _parsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
+        }
+    }
+    
+    private void InferTypes()
+    {
+        try
+        {
+            var sExpr = SExpr.SExpr.parse(_srcText);
+            var ast = Parsing.Parsing.f(sExpr);
+            ast = Typing.Typing.f(
+                Typing.Typing.program_output_typing_rule_t.ProgramShouldNotReturnFunction, 
+                ast
+            );
+            _parsedText = ast.ToString();
+        }
+        catch (Exception exception)
+        {
+            _parsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
+        }
+    }
+}
