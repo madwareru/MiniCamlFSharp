@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MiniCamlFSharp", "MiniCamlF
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MiniCamlFSharpCore", "MiniCamlFSharpCore\MiniCamlFSharpCore.fsproj", "{70C09BCC-472F-4D48-B795-2180A837D340}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniCamlFSharpPlayground", "MiniCamlFSharpPlayground\MiniCamlFSharpPlayground.csproj", "{E2D84E76-C572-42DC-827A-81109E90FDB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{70C09BCC-472F-4D48-B795-2180A837D340}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{70C09BCC-472F-4D48-B795-2180A837D340}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{70C09BCC-472F-4D48-B795-2180A837D340}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2D84E76-C572-42DC-827A-81109E90FDB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2D84E76-C572-42DC-827A-81109E90FDB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2D84E76-C572-42DC-827A-81109E90FDB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2D84E76-C572-42DC-827A-81109E90FDB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
