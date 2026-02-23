@@ -112,3 +112,27 @@ module SExpr =
             | _, garbage -> raise (ParseException $"found some garbage at the end: %A{garbage}")
 
     let parse source = source |> SExprGrammar().parse
+    
+    /// Альтернативный парсер для использования в blazor.
+    /// Парсер основанный на комбинаторах показывает плохую
+    /// производетельность на Web Assembly, вероятно, по причине
+    /// насыщенного использования обработки исключений
+    let parse_alternative s =
+        let rec parse' s =
+            match lex_step.parse s with
+            | Some LParenToken, rest -> parse_list id rest
+            | Some (IdToken id), rest -> SExprId id, rest
+            | Some (IntToken i), rest -> SExprInt i, rest
+            | Some (FloatToken f), rest -> SExprFloat f, rest
+            | Some (BoolToken b), rest -> SExprBool b, rest
+            | Some RParenToken, _ -> failwith "ill formed data! Expected Atom or LParen, but got RParen"
+            | None, _ -> failwith "ill formed data! Expected Atom or LParen, but got nothing"
+        and parse_list cont s =
+            match lex_step.parse s with
+            | Some RParenToken, rest -> SExprList (cont []), rest
+            | _ ->
+                let x, rest = parse' s
+                parse_list (cont << (fun xs -> x::xs)) rest
+        match parse' (Seq.toList s) with
+        | s_expr, [] -> s_expr
+        | _, garbage -> failwithf $"ill formed data! detected garbage at the end: %A{garbage}"
