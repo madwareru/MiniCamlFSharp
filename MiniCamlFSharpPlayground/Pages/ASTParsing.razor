@@ -91,7 +91,7 @@
     {
         try
         {
-            var sExpr = SExpr.SExpr.parse_alternative(_srcText);
+            var sExpr = SExpr.SExpr.parse(_srcText);
             var ast = Parsing.Parsing.f(sExpr);
             _parsedText = ast.ToString();
         }
@@ -105,7 +105,7 @@
     {
         try
         {
-            var sExpr = SExpr.SExpr.parse_alternative(_srcText);
+            var sExpr = SExpr.SExpr.parse(_srcText);
             var ast = Parsing.Parsing.f(sExpr);
             ast = Typing.Typing.f(
                 Typing.Typing.program_output_typing_rule_t.ProgramShouldNotReturnFunction, 

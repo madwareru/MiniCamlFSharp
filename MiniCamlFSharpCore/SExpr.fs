@@ -54,70 +54,8 @@ module SExpr =
                 | ident -> Some(IdToken ident), s
 
         makeParser lex_init
-
-    type SExprGrammar() =
-        member this.parseSExpr = this.parseAtom <|> this.parseList
-
-        member this.parseSExprRef = parserRef <| fun () -> this.parseSExpr
-
-        member this.parseAtom =
-            this.parseId <|> this.parseInt <|> this.parseFloat <|> this.parseBool
-
-        member this.parseId =
-            makeParser
-            <| function
-                | IdToken id :: rest -> SExprId id, rest
-                | x -> raise (ParseException $"Expected identifier but got %A{x}")
-
-        member this.parseInt =
-            makeParser
-            <| function
-                | IntToken n :: rest -> SExprInt n, rest
-                | x -> raise (ParseException $"Expected integer but got %A{x}")
-
-        member this.parseFloat =
-            makeParser
-            <| function
-                | FloatToken n :: rest -> SExprFloat n, rest
-                | x -> raise (ParseException $"Expected float but got %A{x}")
-
-        member this.parseBool =
-            makeParser
-            <| function
-                | BoolToken b :: rest -> SExprBool b, rest
-                | x -> raise (ParseException $"Expected boolean but got %A{x}")
-
-        member this.parseLParen =
-            makeParser
-            <| function
-                | LParenToken :: rest -> (), rest
-                | x -> raise (ParseException $"Expected LParen but got %A{x}")
-
-        member this.parseRParen =
-            makeParser
-            <| function
-                | RParenToken :: rest -> (), rest
-                | x -> raise (ParseException $"Expected RParen but got %A{x}")
-
-        member this.parseList =
-            this.parseLParen -=>+ this.parseSExprRef.some +=>- this.parseRParen
-            |=> SExprList
-
-        member this.parse s =
-            let lexer = lex_step |> toSeqLexer
-            let tokenStream = lexer (Seq.toList s) |> Seq.toList
-
-            match this.parseSExpr.parse tokenStream with
-            | x, [] -> x
-            | _, garbage -> raise (ParseException $"found some garbage at the end: %A{garbage}")
-
-    let parse source = source |> SExprGrammar().parse
-    
-    /// Альтернативный парсер для использования в blazor.
-    /// Парсер основанный на комбинаторах показывает плохую
-    /// производетельность на Web Assembly, вероятно, по причине
-    /// насыщенного использования обработки исключений
-    let parse_alternative s =
+        
+    let parse s =
         let rec parse' s =
             match lex_step.parse s with
             | Some LParenToken, rest -> parse_list id rest
@@ -134,5 +72,6 @@ module SExpr =
                 let x, rest = parse' s
                 parse_list (cont << (fun xs -> x::xs)) rest
         match parse' (Seq.toList s) with
-        | s_expr, [] -> s_expr
-        | _, garbage -> failwithf $"ill formed data! detected garbage at the end: %A{garbage}"
+        | _, garbage when garbage |> List.exists(fun it -> not(it |> System.Char.IsWhiteSpace)) ->
+            failwithf $"ill formed data! detected garbage at the end: %A{garbage}"
+        | s_expr, _ -> s_expr

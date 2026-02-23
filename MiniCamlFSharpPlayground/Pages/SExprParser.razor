@@ -101,7 +101,7 @@
     {
         try
         {
-            var sExpr = SExpr.SExpr.parse_alternative(_srcText);
+            var sExpr = SExpr.SExpr.parse(_srcText);
             _parsedText = sExpr.ToString();
         }
         catch (Exception exception)
