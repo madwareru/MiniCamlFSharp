@@ -1,134 +1,92 @@
 ﻿@page "/SExprParser"
-@using mini_caml_fsharp_core
-@using System.Text
 
 <PageTitle>Разбор S-выражений</PageTitle>
-
-<div class="row">
+<div class="container-fluid">
     <h1>Разбор S-выражений</h1>
-    <p>
-        Первая стадия компиляции заключается в разборе S-выражений из текста.
-        <br/><br/>
-        Исходник --> Разбор S-выражений --> <b>S-выражение (Вы тут)</b>
-        <br/><br/>
-        S-выражения представляют из себя либо атом, к которому можно отнести 
-        целое число, число с плавающей точкой, литерал булевого значения или 
-        текстовый идентификатор произвольного вида, либо список из вложенных 
-        S-выражений, разделённых пробельными символами и обрамлённых круглыми 
-        скобками. Список может быть пуст.
-        <br/><br/>
-        <code>
-            SExpr ::= <br/>
-            | {IntegerLiteral} // 123456 <br/>
-            | {FloatLiteral}   // 123.456 <br/>
-            | {BooleanLiteral} // #t или #f <br/>
-            | {Identifier}     // кстати,это-валидный-идентификатор! <br/>
-            | '(' {SExpr}* ')' // (1 (+ 2 3) #t где-я?) <br/> 
-        </code>
-        <br/><br/>
-        В данном демонстрационном окне можно ввести S-выражение в поле 
-        ввода и попробовать его разобрать, нажав кнопку "Разобрать текст". 
-        При успешном разборе вы увидите в окне справа разобранное представление 
-        S-выражения, в противном случае вы увидите сообщение об ошибке 
-        синтаксического разбора.
-        <br/><br/>
-        Кнопка "Токенизировать" позволяет посмотреть на результат операции
-        лексического анализа, предшествующей синтаксическому разбору.
-        <br/>
-    </p>
-</div>
-
-
-<div class="row" style="min-height: 75px">
-    <div class="col-md-9">
-        <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
-            <option value="">-- Выберите демонстрационный пример --</option>
-            <option value="1">Демо 1. Ветвления</option>
-            <option value="2">Демо 2. Простые функции</option>
-            <option value="3">Демо 3. Fibonacci</option>
-            <option value="4">Демо 4. Tail rec fib</option>
-        </select>
-    </div>
-    <div class="col">
-        <button class="btn btn-outline-secondary" @onclick="LoadSelection">Загрузить</button>
-    </div>
-    <div class="col">
-        <button class="btn btn-outline-secondary" @onclick="ClearInput">Очистить</button>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-5">
-        <div class="row justify-content-center">Исходный текст:</div>
-        <InputTextArea 
-            @bind-Value="_srcText" 
-            class="form-control"
-            style="min-height: 200px"/>
-    </div>
     
-    <div class="col-md-2 justify-content-center">
-        <div class="row justify-content-center">
-            <button class="btn btn-primary" @onclick="TryParse"> Разобрать текст </button>
-            <button class="btn btn-primary" @onclick="Tokenize"> Токенизировать </button>
+    <pre class="mermaid">
+        graph LR
+            A[Исходник] -->|Токенизация| B[Токены]:::gray
+            B -->|Разбор S-выражения| C[S-выражение]:::black
+        classDef black fill:#000000,stroke:#333,stroke-width:2px,color:white
+        classDef gray fill:#888888,stroke:#333,stroke-width:2px,color:black
+    </pre>
+
+    Первая стадия компиляции заключается в разборе S-выражений из текста.
+    <br/><br/>
+    S-выражения представляют из себя либо атом, к которому можно отнести
+    целое число, число с плавающей точкой, литерал булевого значения или
+    текстовый идентификатор произвольного вида, либо список из вложенных
+    S-выражений, разделённых пробельными символами и обрамлённых круглыми
+    скобками. Список может быть пуст.
+    <br/><br/>
+    <code>
+        SExpr ::= <br/>
+        | {IntegerLiteral} // 123456 <br/>
+        | {FloatLiteral} // 123.456 <br/>
+        | {BooleanLiteral} // #t или #f <br/>
+        | {Identifier} // кстати,это-валидный-идентификатор! <br/>
+        | '(' {SExpr}* ')' // (1 (+ 2 3) #t где-я?) <br/>
+    </code>
+    <br/>
+    В данном демонстрационном окне можно ввести S-выражение в поле
+    ввода и попробовать его разобрать, нажав кнопку "Разобрать текст".
+    При успешном разборе вы увидите в окне справа разобранное представление
+    S-выражения, в противном случае вы увидите сообщение об ошибке
+    синтаксического разбора.
+    <br/><br/>
+    Кнопка "Токенизировать" позволяет посмотреть на результат операции
+    лексического анализа, предшествующей синтаксическому разбору.
+    <br/><br/>
+
+    <div class="row" style="min-height: 75px">
+        <div class="col-md-10">
+            <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
+                <option value="">-- Выберите демонстрационный пример --</option>
+                <option value="1">Демо 1. Ветвления</option>
+                <option value="2">Демо 2. Простые функции</option>
+                <option value="3">Демо 3. Fibonacci</option>
+                <option value="4">Демо 4. Хвосторекурсивный Fibonacci</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary"
+                    @onclick="ClearInput"
+                    style="min-width: 100%">Очистить</button>
         </div>
     </div>
-    
-    <div class="col-md-5">
-        <div class="row justify-content-center">Результат разбора:</div>
-        <pre 
-            class="border"
-            style="min-height: 200px;
-                   overflow-y: auto;
-                   margin: 0;
-                   white-space: pre-wrap;"
-        >@_parsedText</pre>
+
+    <div class="row">
+        <div class="col-6">
+            <button class="btn btn-outline-primary"
+                    @onclick="Tokenize"
+                    style="min-width: 100%"> Токенизировать </button>
+        </div>
+        <div class="col-6">
+            <button class="btn btn-outline-primary"
+                    @onclick="TryParse"
+                    style="min-width: 100%"> Разобрать текст </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row justify-content-center">Исходный текст:</div>
+            <InputTextArea
+                @bind-Value="_srcText"
+                class="form-control"
+                style="min-height: 200px"/>
+        </div>
+        <div class="col-md-6">
+            <div class="row justify-content-center">Результат разбора:</div>
+            <pre 
+                class="border"
+                style="min-height: 200px;
+                       overflow-y: auto;
+                       margin: 0;
+                       white-space: pre-wrap;"
+            >@_parsedText</pre>
+        </div>
     </div>
 </div>
-
-@code {
-    private string _srcText = "";
-    private string _parsedText = "";
-    private string _selectedDemo = "";
-    private readonly StringBuilder _reusableSb = new();
-    
-    private void ChangeSelection(ChangeEventArgs e) => _selectedDemo = e.Value?.ToString() ?? "";
-
-    private void LoadSelection() => _srcText = DemoProgramProvider.GetDemoText(_selectedDemo);
-
-    private void ClearInput() => _srcText = "";
-
-    private void TryParse()
-    {
-        try
-        {
-            var sExpr = SExpr.SExpr.parse(_srcText);
-            _parsedText = sExpr.ToString();
-        }
-        catch (Exception exception)
-        {
-            _parsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
-        }
-    }
-    
-    private void Tokenize()
-    {
-        try
-        {
-            var lexer = ParserCombinators.toSeqLexer(SExpr.SExpr.lex_step);
-            var convertedString = Microsoft.FSharp.Collections.SeqModule.ToList(_srcText);
-            var tokens = lexer.Invoke(convertedString);
-            _reusableSb.Clear();
-            
-            if (tokens != null)
-                foreach (var token in tokens)
-                    if (token != null)
-                        _reusableSb.Append($"|{token}| ");
-            
-            _parsedText = _reusableSb.ToString();
-        }
-        catch (Exception exception)
-        {
-            _parsedText = $"Возникла ошибка при разборе текста программы: {exception.Message}";
-        }
-    }
-}
+<MermaidRender Selector="pre.mermaid" />

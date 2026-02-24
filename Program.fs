@@ -62,7 +62,7 @@ let main args =
             File.WriteAllText(csproj_file_path, generated_proj)
             
             let cs_file_path = Path.Combine(build_directory, "Program.cs")
-            printfn $"writing generated code to {csproj_file_path}"
+            printfn $"writing generated code to {cs_file_path}"
             File.WriteAllText(cs_file_path, generated_cs)
             
             printfn "Done!"
