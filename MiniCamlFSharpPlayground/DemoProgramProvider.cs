@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace MiniCamlFSharpPlayground;
 
 public static class DemoProgramProvider
@@ -65,6 +63,26 @@ public static class DemoProgramProvider
         in (fib-tail x-2 x-1 x)))
     in (fib-tail 1 1 x))
   in (fib 6))"
+        ),
+        ["12"] = (
+            "Демо 12. Факториал, массивы и операции над ними, последовательности", 
+            @"(let acc : ([] f) = (new[] 1.0 1) in
+  (let-rec (fact-step x) =
+  (if (<= x 1.0)
+    then ()
+    else
+      (let v = (get[] acc 0) in
+      (let v' = (*. x v) in
+      (;эта-форма-так-же-позволяет-выстроить-последовательность-императивных-команд
+        (;первая-императивная-команда (set[] acc 0 <- v'))
+        (fact-step (-. x 1.0)))))) in
+          (;функция-fact-step-тоже-императивна-так-как-возвращает-Unit
+              (fact-step 6.0)
+              (get[] acc 0))))"
+        ),
+        ["13"] = (
+            "Демо 13. Преобразования между типами", 
+            "(int_of_float (+. (float_of_int 123) 12.5))"
         )
     };
 
