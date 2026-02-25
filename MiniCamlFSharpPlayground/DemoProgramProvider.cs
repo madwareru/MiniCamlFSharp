@@ -1,16 +1,62 @@
+using System.Text;
+
 namespace MiniCamlFSharpPlayground;
 
 public static class DemoProgramProvider
 {
-    private static readonly Dictionary<string, string> _demoPrograms = new()
+    private static readonly Dictionary<string, (string, string)> DemoPrograms = new()
     {
-        { "1", "(if (>= 5 3) then 42 else 13)" },
-        { "2", "(let-rec (add x y) = (+. x y) in (add 12.5 12.5))" },
-        { "3", @"(let-rec (fib x) =
+        ["1"] = (
+            "Демо 1. Целое число", 
+            "123"
+        ),
+        ["2"] = (
+            "Демо 2. Кортежи, значения с плавающей точкой, Unit, идентификаторы, связывание имён", 
+            @"(let это-идентификатор,-и-он-очень-горд-собою! = 123 in 
+  (, это-идентификатор,-и-он-очень-горд-собою! 123.456 #f #t ()))"
+        ),
+        ["3"] = (
+            "Демо 3. Объявление имени с аннотированием типом", 
+            @"(let x : i = 123 in x)"
+        ),
+        ["4"] = (
+            "Демо 4. Деструктуризация кортежа", 
+            @"(let (, x y) = (, 123 234) in (+ x y))"
+        ),
+        ["5"] = (
+            "Демо 5. Деструктуризация кортежа с аннотированием, частичное аннотирование", 
+            @"(let (, x y) : (, i _) = (, 123 234) in (+ x y))"
+        ),
+        ["6"] = (
+            "Демо 6. Комментарии", 
+            "(;таким-образом-можно-прокомментировать-любое-выражение 123)"
+        ),
+        ["7"] = (
+            "Демо 7. Ветвления", 
+            "(if (>= 5 3) then 42 else 13)"
+        ),
+        ["8"] = (
+            "Демо 8. Простая функция над числами с плавающей точкой", 
+            @"(let-rec (add x y) = 
+  (+. x y) in 
+  (add 12.5 12.5))"
+        ),
+        ["9"] = (
+            "Демо 9. Простая функция над целыми числами с аннотацией", 
+            @"(let-rec (add x y) : (i i) -> i  = 
+  (+ x y) in 
+  (add 12 13))"
+        ),
+        ["10"] = (
+            "Демо 10. Fibonacci", 
+            @"(let-rec (fib x) =
   (if (<= x 1)
     then 1
-    else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 6))"},
-        { "4", @"(let-rec (fib x) : (i) -> i =
+    else (+ (fib (- x 1)) (fib (- x 2)))) in (fib 6))"
+        ),
+        ["11"] = (
+            "Демо 11. Хвосторекурсивный Fibonacci", 
+            @"(let-rec (fib x) : (i) -> i =
   (let-rec (fib-tail x-2 x-1 x) : (i i i) -> i =
     (if (<= x 1)
       then x-1
@@ -18,9 +64,19 @@ public static class DemoProgramProvider
         (let (, x-2 x-1 x) = (, x-1 (+ x-2 x-1) (- x 1))
         in (fib-tail x-2 x-1 x)))
     in (fib-tail 1 1 x))
-  in (fib 6))"}
+  in (fib 6))"
+        )
     };
 
+    public static IEnumerable<(string, string)> DemoKeysAndCaptions
+    {
+        get
+        {
+            foreach (var (key, (caption, _)) in DemoPrograms)
+                yield return (key, caption);
+        }
+    }
+
     public static string GetDemoText(string demoName) =>
-        _demoPrograms.TryGetValue(demoName, out var text) ? text : "";
+        DemoPrograms.TryGetValue(demoName, out var pair) ? pair.Item2 : "";
 }

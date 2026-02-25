@@ -19,6 +19,7 @@
     сопоставление этого выражения с образцами, соответствующими синтаксическим формам
     языка MiniCamlFSharp.
     <br/><br/>
+    
     В данном демонстрационном окне можно ввести S-выражение в поле ввода и попробовать 
     его разобрать сначала в S-выражение, а затем в AST, нажав на кнопку "Разобрать текст". 
     При успешном разборе вы увидите в окне справа разобранное представление абстрактного 
@@ -37,10 +38,10 @@
         <div class="col-md-10">
             <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
                 <option value="">-- Выберите демонстрационный пример --</option>
-                <option value="1">Демо 1. Ветвления</option>
-                <option value="2">Демо 2. Простые функции</option>
-                <option value="3">Демо 3. Fibonacci</option>
-                <option value="4">Демо 4. Хвосторекурсивный Fibonacci</option>
+                @foreach (var (key, demoCaption) in DemoProgramProvider.DemoKeysAndCaptions)
+                {
+                    <option value="@key">@demoCaption</option>
+                }
             </select>
         </div>
         <div class="col-md-2">

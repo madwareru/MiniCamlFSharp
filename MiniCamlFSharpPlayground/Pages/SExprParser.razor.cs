@@ -9,7 +9,6 @@ public partial class SExprParser
 {
     private string _parsedText = "";
     private string _srcText = "";
-    private readonly StringBuilder _reusableSb = new();
     
     private void ChangeSelection(ChangeEventArgs e) => 
         _srcText = DemoProgramProvider.GetDemoText(e.Value?.ToString() ?? "");
@@ -32,13 +31,12 @@ public partial class SExprParser
                 var lexer = ParserCombinators.toSeqLexer(SExpr.lex_step);
                 var convertedString = Microsoft.FSharp.Collections.SeqModule.ToList(input);
                 var tokens = lexer.Invoke(convertedString);
-                _reusableSb.Clear();
-            
-                if (tokens != null)
-                    foreach (var token in tokens)
-                        if (token != null)
-                            _reusableSb.AppendLine(token.ToString());
-            
-                return _reusableSb.ToString();
+                if (tokens == null) return "";
+                
+                var sb = new StringBuilder();
+                foreach (var token in tokens.Where(it => it != null))
+                    sb.AppendLine(token.ToString());
+
+                return sb.ToString();
             });
 }
