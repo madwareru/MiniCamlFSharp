@@ -1,0 +1,150 @@
+@page "/KNorm"
+
+<PageTitle>К-нормальная форма</PageTitle>
+
+<div class="container-fluid">
+    <h1>Разбор в AST</h1>
+    
+    <pre class="mermaid">
+        graph LR
+            A[Типизированное AST] -->|K-нормализация| B[KNorm]:::gray
+            B -->|Alpha-конверсия| C[KNorm]:::gray
+            C -->|Beta-редукция| D[KNorm]:::gray
+            D -->|Реассоциирование| E[KNorm]:::gray
+            E -->|Inlining| F[KNorm]:::gray
+            F -->|ConstFolding| G[KNorm]:::gray
+            G -->|DeadCodeElimination| C[KNorm]:::gray
+            C -->|После всех оптимизаций| H[Оптимизированное KNorm]:::black
+        classDef black fill:#000000,stroke:#333,stroke-width:2px,color:white
+        classDef gray fill:#888888,stroke:#333,stroke-width:2px,color:black
+    </pre>
+
+    После стадии синтаксического разбора и вывода типов компилятор переводит код 
+    из представления в виде дерева абстрактного синтаксиса в так называемую K-нормальную форму. 
+    Ключевой чертой данного представления является то, что любые сложные вычисления оперируют 
+    только значениями из переменных, то есть убирается вложенность выражений посредством связывания
+    промежуточных вычислений с временными переменными. Помимо этого, так же в данном представлении 
+    полностью устраняются значения булевого типа, они превращаются в целочисленные, а операция ветвления
+    приводится к двум возможным операциям с проверкой операндов на равенство или на меньше или равно.
+    <br/><br/>
+    
+    Такое представление очень удобно для оптимизаций и по факту все оптимизации оперируют именно этим 
+    предствалением.
+    <br/><br/>
+    
+    После K-нормализации код подвергается Alpha-конверсии (убираются все затенения имён, вместо старых
+    имён подставляются имена с уникальным числовым суффиксом.
+    <br/><br/>
+    
+    После Alpha-конверсии код подвергается Alpha-конверсии циклически (пока не исчерпается лимит или не 
+    будет достигнуто состояние когда код не меняется) запускаются проходы Beta-редукции, 
+    затем реассоциирования вложенных let выражений, затем инлайнинга вызовов функций, затем сворачивания 
+    констант, затем устранения мёртвого кода.
+    <br/><br/>
+    
+    Beta-редукция осуществляет подстановку <code>(y |=> x)</code> для выражений вида 
+    <code>(let y = x in some_expr_with_y)</code>
+    <br/><br/>
+    
+    Операция реассоциирования превращает выражения вида 
+    <code>(let x = (let y = (let z = 1) in z + 1) in y + 1) in x)</code>
+    в выражения вида <code>(let z = 1 in (let y = z + 1 in (let x = y + 1 in x)))</code>
+    <br/><br/>
+    
+    Операция инлайнинга вызовов функций встраивает тело коротких функций непосредственно в код, при этом имена из
+    тела этих функций снова проходят Alpha-конверсию для сохранения инварианта уникальных имён
+    <br/><br/>
+    
+    Свёртывание констант сворачивает значения выражений, переменным из которых присвоено коснтантное значение до
+    единственной константы, а устранение мёртвого кода удаляет объявления функций и переменных, которые становятся
+    неиспользуемыми
+    <br/><br/>
+    
+    В данном демонстрационном окне можно ввести программу и посмотреть на различные этапы её жизни в виде
+    K-нормальной формы. Этапы включают K-нормализацию, Alpha-конверсию, однократный проход Beta-редукции, 
+    однократный проход реассоциирования, однократный проход инлайнинга вызовов, однократный проход сворачивания 
+    констант, а так же результат после всего цикла оптимизаций (каждая последующая кнопка включает в себя 
+    результаты работы предыдущих)
+    <br/><br/>
+
+    <div class="row" style="min-height: 75px">
+        <div class="col-md-10">
+            <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
+                <option value="">-- Выберите демонстрационный пример --</option>
+                @foreach (var (key, demoCaption) in DemoProgramProvider.DemoKeysAndCaptions)
+                {
+                    <option value="@key">@demoCaption</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary"
+                    @onclick="ClearInput"
+                    style="min-width: 100%">Очистить</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="KNormalize"
+                    style="min-width: 100%"> K-нормализация </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="AlphaConvert"
+                    style="min-width: 100%"> Alpha-конверсия </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="BetaReduce"
+                    style="min-width: 100%"> Beta-редукция </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="Reassoc"
+                    style="min-width: 100%"> Реассоциирование </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="Inline"
+                    style="min-width: 100%"> Встраивание </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="ConstFold"
+                    style="min-width: 100%"> Сворачивание констант </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="DeadCodeEliminate"
+                    style="min-width: 100%"> Устранение мёртвого кода </button>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="Optimize"
+                    style="min-width: 100%"> Оптимизационный цикл </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row justify-content-center">Исходный текст:</div>
+            <InputTextArea
+                @bind-Value="_srcText"
+                class="form-control"
+                style="min-height: 200px"/>
+        </div>
+        <div class="col-md-6">
+            <div class="row justify-content-center">Результат разбора:</div>
+            <pre 
+                class="border"
+                style="min-height: 200px;
+                       overflow-y: auto;
+                       margin: 0;
+                       white-space: pre-wrap;"
+            >@_parsedText</pre>
+        </div>
+    </div>
+</div>
+<MermaidRender Selector="pre.mermaid" />

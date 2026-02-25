@@ -18,7 +18,7 @@ module Id =
     let mutable private counter = 0
 
     // Сброс счётчика. Большей частью предназначен для использования в юнит тестах
-    let internal reset () = counter <- 0
+    let reset () = counter <- 0
 
     /// Используется для достижения уникальности существующих идентификаторов
     let gen_id s =

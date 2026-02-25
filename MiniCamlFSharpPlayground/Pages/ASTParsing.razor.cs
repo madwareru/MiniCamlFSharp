@@ -3,6 +3,7 @@ using Typing = mini_caml_fsharp_core.Typing.Typing;
 using Parsing = mini_caml_fsharp_core.Parsing.Parsing;
 
 using Microsoft.AspNetCore.Components;
+using mini_caml_fsharp_core;
 
 namespace MiniCamlFSharpPlayground.Pages;
 
@@ -20,7 +21,11 @@ public partial class ASTParsing
         DemoUtils.Do(
             _srcText,
             out _parsedText,
-            input => Parsing.f(SExpr.parse(input)).ToString());
+            input =>
+            {
+                Id.Id.reset();
+                return Parsing.f(SExpr.parse(input)).ToString();
+            });
     
     private void InferTypes() =>
         DemoUtils.Do(
@@ -28,6 +33,7 @@ public partial class ASTParsing
             out _parsedText,
             input =>
             {
+                Id.Id.reset();
                 var typingRule = Typing.program_output_typing_rule_t.ProgramShouldNotReturnFunction;
                 var ast = Typing.f(typingRule, Parsing.f(SExpr.parse(input)));
                 return ast.ToString();
