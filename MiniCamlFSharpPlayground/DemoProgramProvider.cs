@@ -95,6 +95,21 @@ public static class DemoProgramProvider
 (; 
   (do-loop 0 10 adder) 
   (get[] cell 0)))))"
+        ),
+        ["15"] = (
+            "Демо 15. Лямбда-выражения, каррирование",
+            "(let sum_curry = (lam (x) -> (lam (y) -> (+ x y))) in ((sum_curry 5) 8))"
+        ),
+        ["16"] = (
+            "Демо 16. Передача лямбда-выражений в параметры функций",
+            @"(let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ =
+  (if (<= start end)
+    then (; (iter-action start) (do-loop (+ start 1) end iter-action))
+    else ()) in
+(let cell = (;мутабельная-ячейка (new[] 0 1)) in
+(; 
+  (do-loop 0 10 (lam (x) -> (set[] cell 0 <- (+ x (get[] cell 0))))) 
+  (get[] cell 0))))"
         )
     };
 
