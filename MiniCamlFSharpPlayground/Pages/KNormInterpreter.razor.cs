@@ -16,7 +16,7 @@ namespace MiniCamlFSharpPlayground.Pages;
 
 public partial class KNormInterpreter
 {
-    private string _parsedText = "";
+    private string _resultText = "";
     private string _srcText = "";
     
     private void ChangeSelection(ChangeEventArgs e) => 
@@ -28,7 +28,7 @@ public partial class KNormInterpreter
     private void Run() =>
         DemoUtils.Do(
             _srcText, 
-            out _parsedText,
+            out _resultText,
             input =>
             {
                 Id.Id.reset();

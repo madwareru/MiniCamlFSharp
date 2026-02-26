@@ -83,6 +83,18 @@ public static class DemoProgramProvider
         ["13"] = (
             "Демо 13. Преобразования между типами", 
             "(int_of_float (+. (float_of_int 123) 12.5))"
+        ),
+        ["14"] = (
+            "Демо 14. Передача функций как значений в параметры других функций",
+            @"(let-rec (do-loop start end iter-action) : (_ _ (fn (i) -> u)) -> _ =
+  (if (<= start end)
+    then (; (iter-action start) (do-loop (+ start 1) end iter-action))
+    else ()) in
+(let cell = (;мутабельная-ячейка (new[] 0 1)) in
+(let-rec (adder x) = (set[] cell 0 <- (+ x (get[] cell 0))) in
+(; 
+  (do-loop 0 10 adder) 
+  (get[] cell 0)))))"
         )
     };
 
