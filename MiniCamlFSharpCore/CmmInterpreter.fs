@@ -135,6 +135,12 @@ module CmmInterpreter =
                 fn.body |> interpret_block top_level_env env'
             | None ->
                 match label, args with
+                | "min_caml_float_of_int", [ i ] ->
+                    let i = lookup_i i
+                    value_t.Float (double i)
+                | "min_caml_int_of_float", [ f ] ->
+                    let f = lookup_f f
+                    value_t.Int (int64 f)
                 | "min_caml_alloc_vector", [ count ] ->
                     let count = lookup_i count
                     let mem = Array.create (int count) value_t.Unit

@@ -1,0 +1,57 @@
+@page "/KNormInterpreter"
+
+<PageTitle>Интерпретатор</PageTitle>
+
+<div class="container-fluid">
+    <h1>Интерпретатор</h1>
+
+    В данном демонстрационном окне можно ввести программу и посмотреть на результат её интерпретации в K-нормальной 
+    форме после проходов оптимизаций.
+    <br/><br/>
+
+    <div class="row" style="min-height: 75px">
+        <div class="col-md-10">
+            <select id="demoSelect" class="form-select" @onchange="ChangeSelection">
+                <option value="">-- Выберите демонстрационный пример --</option>
+                @foreach (var (key, demoCaption) in DemoProgramProvider.DemoKeysAndCaptions)
+                {
+                    <option value="@key">@demoCaption</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary"
+                    @onclick="ClearInput"
+                    style="min-width: 100%">Очистить</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-outline-primary"
+                    @onclick="Run"
+                    style="min-width: 100%"> Запуск </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row justify-content-center">Исходный текст:</div>
+            <InputTextArea
+                @bind-Value="_srcText"
+                class="form-control"
+                style="min-height: 200px"/>
+        </div>
+        <div class="col-md-6">
+            <div class="row justify-content-center">Результат разбора:</div>
+            <pre 
+                class="border"
+                style="min-height: 200px;
+                       overflow-y: auto;
+                       margin: 0;
+                       white-space: pre-wrap;"
+            >@_parsedText</pre>
+        </div>
+    </div>
+</div>
+<MermaidRender Selector="pre.mermaid" />

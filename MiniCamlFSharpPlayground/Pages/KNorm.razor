@@ -11,9 +11,9 @@
             B -->|Alpha-конверсия| C[KNorm]:::gray
             C -->|Beta-редукция| D[KNorm]:::gray
             D -->|Реассоциирование| E[KNorm]:::gray
-            E -->|Inlining| F[KNorm]:::gray
-            F -->|ConstFolding| G[KNorm]:::gray
-            G -->|DeadCodeElimination| C[KNorm]:::gray
+            E -->|Встраивание| F[KNorm]:::gray
+            F -->|Сворачивание констант| G[KNorm]:::gray
+            G -->|Удаление мёртвого кода| C[KNorm]:::gray
             C -->|После всех оптимизаций| H[Оптимизированное KNorm]:::black
         classDef black fill:#000000,stroke:#333,stroke-width:2px,color:white
         classDef gray fill:#888888,stroke:#333,stroke-width:2px,color:black
@@ -51,7 +51,7 @@
     в выражения вида <code>(let z = 1 in (let y = z + 1 in (let x = y + 1 in x)))</code>
     <br/><br/>
     
-    Операция инлайнинга вызовов функций встраивает тело коротких функций непосредственно в код, при этом имена из
+    Операция встраивания вызовов функций встраивает тело коротких функций непосредственно в код, при этом имена из
     тела этих функций снова проходят Alpha-конверсию для сохранения инварианта уникальных имён
     <br/><br/>
     

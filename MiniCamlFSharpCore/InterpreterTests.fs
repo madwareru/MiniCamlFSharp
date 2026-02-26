@@ -223,6 +223,10 @@ let private interpretation_tests: test_case list = [
         "
         expected_res = InterpreterShared.Float 720.0
     }
+    {
+        s_expr = "(int_of_float (+. (float_of_int 123) 12.5))"
+        expected_res = InterpreterShared.Int 135
+    }
 ]
 
 [<Test>]
