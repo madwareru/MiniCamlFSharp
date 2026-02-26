@@ -1,0 +1,1 @@
+(let sum_curry = (lam (x) -> (lam (y) -> (+ x y))) in (print_int_ln ((sum_curry 5) 8)))

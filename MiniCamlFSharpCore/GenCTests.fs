@@ -72,6 +72,7 @@ let testGenC () =
         "tst6", Txt
         "tst7", Txt
         "tst8", Txt
+        "tst9", Txt
         "tak", Txt
         "loop_idiom", Txt
         "mandelbrot", Txt
@@ -130,6 +131,7 @@ let testGenCSharp () =
         "tst6", Txt
         "tst7", Txt
         "tst8", Txt
+        "tst9", Txt
         "tak", Txt
         "loop_idiom", Txt
         "mandelbrot", Txt

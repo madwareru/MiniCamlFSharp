@@ -202,6 +202,27 @@ module Parsing =
                         p_expr cont
                     )
             | _ -> failwith "incorrect 'let-rec' form found"
+        | SExpr.SExprList(SExpr.SExprId [ 'l'; 'a'; 'm' ] :: exs) ->
+            match exs with
+            | [ SExpr.SExprList(args)
+                SExpr.SExprId [ '-'; '>' ]
+                body ] ->
+                match args with
+                | [] -> failwith "let-rec with 0 args are not supported"
+                | _ ->
+                    let bindings = parse_bindings args
+                    let binding_ts = bindings |> List.map snd
+                    let t = Type.FunType(binding_ts, Type.gen_empty ())
+                    
+                    let tmp_name = Id.gen_tmp t
+
+                    Syntax.LetRecNode(
+                        { name = (tmp_name, t)
+                          args = bindings
+                          body = p_expr body },
+                        Syntax.VarNode tmp_name
+                    )
+            | _ -> failwith "incorrect 'lam' form found"
         | SExpr.SExprList(SExpr.SExprId(';' :: _) :: es) ->
             let rec unwind =
                 function

@@ -240,6 +240,10 @@ let private interpretation_tests: test_case list = [
                 (get[] cell 0)))))"
         expected_res = InterpreterShared.Int 55
     }
+    {
+        s_expr = "(let sum_curry = (lam (x) -> (lam (y) -> (+ x y))) in ((sum_curry 5) 8))"
+        expected_res = InterpreterShared.Int 13
+    }
 ]
 
 [<Test>]
