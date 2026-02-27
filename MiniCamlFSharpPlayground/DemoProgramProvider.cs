@@ -110,6 +110,13 @@ public static class DemoProgramProvider
 (; 
   (do-loop 0 10 (lam (x) -> (set[] cell 0 <- (+ x (get[] cell 0))))) 
   (get[] cell 0))))"
+        ),
+        ["17"] = (
+            "Демо 17. рекурсивный вызов в лямбда-выражении",
+            @"(let fib = (lam (x) ->
+  (if (<= x 1)
+    then 1
+    else (+ (rec-call! (- x 1)) (rec-call! (- x 2))))) in (fib 6))"
         )
     };
 

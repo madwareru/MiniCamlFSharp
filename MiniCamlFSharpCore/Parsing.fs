@@ -214,13 +214,13 @@ module Parsing =
                     let binding_ts = bindings |> List.map snd
                     let t = Type.FunType(binding_ts, Type.gen_empty ())
                     
-                    let tmp_name = Id.gen_tmp t
+                    let call_self_name = "rec-call!"
 
                     Syntax.LetRecNode(
-                        { name = (tmp_name, t)
+                        { name = (call_self_name, t)
                           args = bindings
                           body = p_expr body },
-                        Syntax.VarNode tmp_name
+                        Syntax.VarNode call_self_name
                     )
             | _ -> failwith "incorrect 'lam' form found"
         | SExpr.SExprList(SExpr.SExprId(';' :: _) :: es) ->
