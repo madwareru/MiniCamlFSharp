@@ -193,19 +193,19 @@ let private k_norm_tests: test_case list = [
                     (get[] arr 0)
                     (get[] arr 1))))"
         expected_k_form = KNorm.Let(("arr", Type.ArrayType Type.IntType),
-            KNorm.Let(("Ti3", Type.IntType), KNorm.Int 2,
-                KNorm.Let(("Ti4", Type.IntType), KNorm.Int 0, KNorm.ExtFunApply("create_array", ["Ti3"; "Ti4"]))),
-            KNorm.Let(("Tu1", Type.UnitType),
-                KNorm.Let(("Ti5", Type.IntType), KNorm.Int 0,
-                KNorm.Let(("Ti6", Type.IntType), KNorm.Int 10, KNorm.Put("arr", "Ti5", "Ti6"))),
-                KNorm.Let(("Tu2", Type.UnitType),
-                    KNorm.Let(("Ti7", Type.IntType), KNorm.Int 1,
-                    KNorm.Let(("Ti8", Type.IntType), KNorm.Int 20, KNorm.Put("arr", "Ti7", "Ti8"))),
-                    KNorm.Let(("Ti10", Type.IntType),
-                        KNorm.Let(("Ti9", Type.IntType), KNorm.Int 0, KNorm.Get("arr", "Ti9")),
-                        KNorm.Let(("Ti12", Type.IntType),
-                            KNorm.Let(("Ti11", Type.IntType), KNorm.Int 1, KNorm.Get("arr", "Ti11")),
-                            KNorm.Add("Ti10", "Ti12")
+            KNorm.Let(("Ti1", Type.IntType), KNorm.Int 2,
+                KNorm.Let(("Ti2", Type.IntType), KNorm.Int 0, KNorm.ExtFunApply("create_array", ["Ti1"; "Ti2"]))),
+            KNorm.Let(("_", Type.UnitType),
+                KNorm.Let(("Ti3", Type.IntType), KNorm.Int 0,
+                KNorm.Let(("Ti4", Type.IntType), KNorm.Int 10, KNorm.Put("arr", "Ti3", "Ti4"))),
+                KNorm.Let(("_", Type.UnitType),
+                    KNorm.Let(("Ti5", Type.IntType), KNorm.Int 1,
+                    KNorm.Let(("Ti6", Type.IntType), KNorm.Int 20, KNorm.Put("arr", "Ti5", "Ti6"))),
+                    KNorm.Let(("Ti8", Type.IntType),
+                        KNorm.Let(("Ti7", Type.IntType), KNorm.Int 0, KNorm.Get("arr", "Ti7")),
+                        KNorm.Let(("Ti10", Type.IntType),
+                            KNorm.Let(("Ti9", Type.IntType), KNorm.Int 1, KNorm.Get("arr", "Ti9")),
+                            KNorm.Add("Ti8", "Ti10")
                         )
                     )
                 )

@@ -98,7 +98,7 @@ public static class DemoProgramProvider
         ),
         ["15"] = (
             "Демо 15. Лямбда-выражения, каррирование",
-            "(let sum_curry = (lam (x) -> (lam (y) -> (+ x y))) in ((sum_curry 5) 8))"
+            "(let sum_curry = (lam (x) -> (λ (y) -> (+ x y))) in ((sum_curry 5) 8))"
         ),
         ["16"] = (
             "Демо 16. Передача лямбда-выражений в параметры функций",
@@ -113,7 +113,7 @@ public static class DemoProgramProvider
         ),
         ["17"] = (
             "Демо 17. рекурсивный вызов в лямбда-выражении",
-            @"(let fib = (lam (x) ->
+            @"(let fib = (λ (x) ->
   (if (<= x 1)
     then 1
     else (+ (rec-call! (- x 1)) (rec-call! (- x 2))))) in (fib 6))"

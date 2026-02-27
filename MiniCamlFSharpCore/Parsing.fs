@@ -202,6 +202,7 @@ module Parsing =
                         p_expr cont
                     )
             | _ -> failwith "incorrect 'let-rec' form found"
+        | SExpr.SExprList(SExpr.SExprId [ 'λ' ] :: exs)
         | SExpr.SExprList(SExpr.SExprId [ 'l'; 'a'; 'm' ] :: exs) ->
             match exs with
             | [ SExpr.SExprList(args)
@@ -229,7 +230,7 @@ module Parsing =
                 | [ e ] -> p_expr e
                 | e :: cont ->
                     let e = p_expr e
-                    let id = Id.gen_tmp Type.UnitType
+                    let id = "_"
                     let cont = unwind cont
                     Syntax.LetNode((id, Type.UnitType), e, cont)
                 | _ -> failwith "sequence of 0 statements are not supported"

@@ -353,10 +353,10 @@ let private parsing_tests: test_case list = [
             ("arr", Type.ArrayType(Type.IntType)),
             Syntax.ArrayNode(Syntax.IntNode 0, Syntax.IntNode 2),
             Syntax.LetNode(
-                ("Tu1", Type.UnitType),
+                ("_", Type.UnitType),
                 Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 0, Syntax.IntNode 10),
                 Syntax.LetNode(
-                    ("Tu2", Type.UnitType),
+                    ("_", Type.UnitType),
                     Syntax.PutNode(Syntax.VarNode "arr", Syntax.IntNode 1, Syntax.IntNode 20),
                     Syntax.AddNode(
                         Syntax.GetNode(Syntax.VarNode "arr", Syntax.IntNode 0),

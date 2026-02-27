@@ -185,30 +185,30 @@ let private a_conv_tests: test_case list = [
         {
             top_level_functions = []
             main =
-                Let(("arr.13", ArrayType IntType),
-                    Let(("Ti3.14", IntType), Int 2,
-                    Let(("Ti4.15", IntType), Int 0,
-                    ApplyDirect ("min_caml_create_array" |> Id.L, ["Ti3.14"; "Ti4.15"]))
+                Let(("arr.11", ArrayType IntType),
+                    Let(("Ti1.12", IntType), Int 2,
+                    Let(("Ti2.13", IntType), Int 0,
+                    ApplyDirect (Id.L "min_caml_create_array", ["Ti1.12"; "Ti2.13"]))
                 ),
-                Let(("Tu1.16", UnitType),
-                    Let(("Ti5.17", IntType), Int 0,
-                    Let(("Ti6.18", IntType), Int 10,
-                    Put ("arr.13", "Ti5.17", "Ti6.18"))
+                Let(("_.14", UnitType),
+                    Let(("Ti3.15", IntType), Int 0,
+                    Let(("Ti4.16", IntType), Int 10,
+                    Put ("arr.11", "Ti3.15", "Ti4.16"))
                 ),
-                Let(("Tu2.19", UnitType),
-                    Let(("Ti7.20", IntType), Int 1,
-                    Let(("Ti8.21", IntType), Int 20,
-                    Put ("arr.13", "Ti7.20", "Ti8.21"))
+                Let(("_.17", UnitType), 
+                    Let(("Ti5.18", IntType), Int 1,
+                    Let(("Ti6.19", IntType), Int 20,
+                    Put ("arr.11", "Ti5.18", "Ti6.19"))
                 ),
-                Let(("Ti10.22", IntType),
-                    Let (("Ti9.23", IntType), Int 0,
-                    Get ("arr.13", "Ti9.23")
+                Let(("Ti8.20", IntType), 
+                    Let (("Ti7.21", IntType), Int 0,
+                    Get ("arr.11", "Ti7.21")
                 ),
-                Let(("Ti12.24", IntType),
-                    Let (("Ti11.25", IntType), Int 1,
-                    Get ("arr.13", "Ti11.25")
+                Let(("Ti10.22", IntType), 
+                    Let (("Ti9.23", IntType), Int 1,
+                    Get ("arr.11", "Ti9.23")
                 ),
-                Add ("Ti10.22", "Ti12.24"))))))
+                Add ("Ti8.20", "Ti10.22"))))))
         }
     }
 ]
