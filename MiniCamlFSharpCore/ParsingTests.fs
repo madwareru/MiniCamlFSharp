@@ -287,6 +287,46 @@ let private parsing_tests: test_case list = [
         )
     }
     {
+        s_expr = @"
+            (let*
+              (
+                (x = #t)
+                (y = 123)
+              ) in x)"
+        expected_syntax =
+            Syntax.LetNode(("x", Type.gen_empty ()), Syntax.BoolNode true,
+            Syntax.LetNode(("y", Type.gen_empty ()), Syntax.IntNode 123,
+            Syntax.VarNode "x"
+        ))
+    }
+    {
+        s_expr = @"
+            (let*
+              (
+                (x : b = #t)
+                ( (, y z) : (, _ i) = (, #f 123))
+              ) in x)"
+        expected_syntax =
+            Syntax.LetNode(("x", Type.BoolType), Syntax.BoolNode true,
+            Syntax.LetTuple(["y", Type.gen_empty(); "z", Type.IntType],
+            Syntax.TupleNode [Syntax.BoolNode false; Syntax.IntNode 123],
+            Syntax.VarNode "x"
+        ))
+    }
+    {
+        s_expr = @"
+            (let*
+              (
+                (x : b = #t)
+                (y : i = 123)
+              ) in x)"
+        expected_syntax =
+            Syntax.LetNode(("x", Type.BoolType), Syntax.BoolNode true,
+            Syntax.LetNode(("y", Type.IntType), Syntax.IntNode 123,
+            Syntax.VarNode "x"
+        ))
+    }
+    {
         s_expr = "(let-rec (fac x) = (if (<= x 1.0) then 1.0 else (*. x (fac (-. x 1.0)))) in (fac 6.0))"
         expected_syntax = Syntax.LetRecNode(
             {
@@ -316,6 +356,36 @@ let private parsing_tests: test_case list = [
                 body = Syntax.ApplyNode(Syntax.VarNode "println-hello-world", [ Syntax.UnitNode ])
             }, Syntax.UnitNode
         )
+    }
+    {
+        // Можно создавать функции через лямбда выражения
+        s_expr = "(let hello-world : (fn (u) -> u) = (lam (_) -> (println-hello-world ())) in ())"
+        expected_syntax =
+            Syntax.LetNode(("hello-world", Type.FunType ([Type.UnitType], Type.UnitType)),
+                Syntax.LetRecNode(
+                    { name = "rec-call!", Type.FunType ([Type.VarType { contents = None }], Type.VarType { contents = None })
+                      args = [("_", Type.VarType { contents = None })]
+                      body = Syntax.ApplyNode (Syntax.VarNode "println-hello-world", [Syntax.UnitNode])
+                    },
+                    Syntax.VarNode "rec-call!"
+                ),
+                Syntax.UnitNode
+            )
+    }
+    {
+        // Можно создавать функции через лямбда выражения
+        s_expr = "(let hello-world : (fn (u) -> u) = (λ (_) -> (println-hello-world ())) in ())"
+        expected_syntax =
+            Syntax.LetNode(("hello-world", Type.FunType ([Type.UnitType], Type.UnitType)),
+                Syntax.LetRecNode(
+                    { name = "rec-call!", Type.FunType ([Type.VarType { contents = None }], Type.VarType { contents = None })
+                      args = [("_", Type.VarType { contents = None })]
+                      body = Syntax.ApplyNode (Syntax.VarNode "println-hello-world", [Syntax.UnitNode])
+                    },
+                    Syntax.VarNode "rec-call!"
+                ),
+                Syntax.UnitNode
+            )
     }
     {
         // функция является первоклассным значением и её можно положить

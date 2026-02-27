@@ -1,7 +1,6 @@
 module mini_caml_fsharp_core.Parsing
 
 open mini_caml_fsharp_core.SExpr
-open mini_caml_fsharp_core.Id
 open mini_caml_fsharp_core.Type
 open mini_caml_fsharp_core.Syntax
 
@@ -157,6 +156,58 @@ module Parsing =
                 let cont = p_expr cont
                 Syntax.LetTuple(bindings, e, cont)
             | _ -> failwith "incorrect 'let' form found"
+        | SExpr.SExprList[
+            SExpr.SExprId [ 'l'; 'e'; 't'; '*' ]
+            SExpr.SExprList(exs)
+            SExpr.SExprId [ 'i'; 'n' ]
+            cont ] ->
+            let mutable res = p_expr cont
+            for e in exs |> List.rev do
+                match e with
+                | SExpr.SExprList
+                    [
+                        SExpr.SExprId binding
+                        SExpr.SExprId [ '=' ]
+                        e
+                    ] ->
+                        let binding = add_typ binding
+                        let e = p_expr e
+                        res <- Syntax.LetNode(binding, e, res)
+                | SExpr.SExprList
+                    [
+                        SExpr.SExprId binding
+                        SExpr.SExprId [ ':' ]
+                        annot
+                        SExpr.SExprId [ '=' ]
+                        e
+                    ] ->
+                        let binding = (make_id binding, parse_t annot)
+                        let e = p_expr e
+                        res <- Syntax.LetNode(binding, e, res)
+                | SExpr.SExprList
+                    [
+                        SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
+                        SExpr.SExprId [ '=' ]
+                        e
+                    ] ->
+                        let bindings = parse_bindings bindings
+                        let e = p_expr e
+                        res <- Syntax.LetTuple(bindings, e, res)
+                | SExpr.SExprList
+                    [
+                        SExpr.SExprList(SExpr.SExprId [ ',' ] :: bindings)
+                        SExpr.SExprId [ ':' ]
+                        SExpr.SExprList(SExpr.SExprId [ ',' ] :: binding_ts)
+                        SExpr.SExprId [ '=' ]
+                        e
+                    ] ->
+                        let bindings = parse_bindings bindings
+                        let binding_ts = binding_ts |> List.map parse_t
+                        let bindings = (bindings, binding_ts) ||> List.map2 (fun a t -> (fst a, t))
+                        let e = p_expr e
+                        res <- Syntax.LetTuple(bindings, e, res) 
+                | _ -> failwith "incorrect 'let*' form found"
+            res
         | SExpr.SExprList(SExpr.SExprId [ 'l'; 'e'; 't'; '-'; 'r'; 'e'; 'c' ] :: exs) ->
             match exs with
             | [ SExpr.SExprList(SExpr.SExprId name :: args)
