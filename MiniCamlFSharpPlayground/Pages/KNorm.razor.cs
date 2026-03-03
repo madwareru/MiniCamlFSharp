@@ -8,6 +8,7 @@ using Assoc = mini_caml_fsharp_core.Assoc.Assoc;
 using Inlining = mini_caml_fsharp_core.Inlining.Inlining;
 using ConstFolding = mini_caml_fsharp_core.ConstFolding.ConstFolding;
 using Elimination = mini_caml_fsharp_core.Elimination.Elimination;
+using CommonSubElim = mini_caml_fsharp_core.CommonSubElim.CommonSubElim;
 using Microsoft.AspNetCore.Components;
 using mini_caml_fsharp_core;
 
@@ -117,6 +118,21 @@ public partial class KNorm
                 return kNorm.ToString();
             });
     
+    private void CommonSubElimination() =>
+        DemoUtils.Do(
+            _srcText, 
+            out _parsedText,
+            input =>
+            {
+                Id.Id.reset();
+                var typingRule = Typing.program_output_typing_rule_t.ProgramShouldNotReturnFunction;
+                var ast = Typing.f(typingRule, Parsing.f(SExpr.parse(input)));
+                var kNorm = AlphaConv.f(KNormalisation.f(ast));
+                kNorm = Elimination.f(ConstFolding.f(Inlining.f(16, Assoc.f(BetaReduction.f(kNorm)))));
+                kNorm = Elimination.f(CommonSubElim.f(kNorm));
+                return kNorm.ToString();
+            });
+    
     private void Optimize() =>
         DemoUtils.Do(
             _srcText, 
@@ -130,6 +146,7 @@ public partial class KNorm
                 for (var i = 0; i < 100; i++)
                 {
                     var optimized = Elimination.f(ConstFolding.f(Inlining.f(16, Assoc.f(BetaReduction.f(kNorm)))));
+                    optimized = Elimination.f(CommonSubElim.f(optimized));
                     if (optimized.Equals(kNorm))
                         break;
                     kNorm = optimized;

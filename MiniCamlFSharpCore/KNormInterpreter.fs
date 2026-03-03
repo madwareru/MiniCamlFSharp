@@ -118,6 +118,8 @@ module KNormInterpreter =
             fn.body |> interpret env'
         | KNorm.ExtFunApply(func_name, args) ->
             match func_name, args with
+            | "read_int", [ _ ] ->
+                value_t.Int 42
             | "float_of_int", [ i ] ->
                 let i = lookup_i i
                 value_t.Float (double i)

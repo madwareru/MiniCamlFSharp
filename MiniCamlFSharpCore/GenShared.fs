@@ -13,6 +13,7 @@ open mini_caml_fsharp_core.Assoc
 open mini_caml_fsharp_core.Inlining
 open mini_caml_fsharp_core.ConstFolding
 open mini_caml_fsharp_core.Elimination
+open mini_caml_fsharp_core.CommonSubElim
 open mini_caml_fsharp_core.ClosureRepresentationConv
 open mini_caml_fsharp_core.CmmConv
 
@@ -108,6 +109,11 @@ module GenShared =
                 let e' = e' |> Assoc.f
                 let e' = e' |> Inlining.f settings.inlining_threshold
                 let e' = e' |> ConstFolding.f
+                let e' = e' |> Elimination.f
+                // После удаления мёртвого кода пробуем удалить
+                // повторяющиеся подвыражения, после чего повторяем
+                // удаление мёртвого кода ещё раз
+                let e' = e' |> CommonSubElim.f
                 let e' = e' |> Elimination.f
                 if e = e' then e' else iter (n - 1) e'
 

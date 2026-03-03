@@ -123,6 +123,8 @@ module ClosureRepresentationInterpreter =
                 fn.body |> interpret_expr top_level_env env'
             | None ->
                 match label, args with
+                | "min_caml_read_int", [ _ ] ->
+                    value_t.Int 42
                 | "min_caml_float_of_int", [ i ] ->
                     let i = lookup_i i
                     value_t.Float (double i)

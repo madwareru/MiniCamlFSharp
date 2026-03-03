@@ -31,6 +31,7 @@ module Typing =
                 "print_ln", Type.FunType([ Type.UnitType ], Type.UnitType)
                 "print_tab", Type.FunType([ Type.UnitType ], Type.UnitType)
                 "put_char", Type.FunType([ Type.IntType ], Type.UnitType)
+                "read_int", Type.FunType([ Type.UnitType ], Type.IntType)
             ]
 
     /// <summary>

@@ -2,6 +2,8 @@ module mini_caml_fsharp_core.ConstFolding
 
 open mini_caml_fsharp_core.KNorm
 open mini_caml_fsharp_core.M
+open mini_caml_fsharp_core.Id
+open mini_caml_fsharp_core.Type
 
 module ConstFolding =
     let rec const_fold (env: KNorm.t M) e =
@@ -22,6 +24,24 @@ module ConstFolding =
             |> Option.bind (function
                 | KNorm.Tuple v -> Some v
                 | _ -> None)
+            
+        let as_add x =
+            env.TryFind x
+            |> Option.bind (function
+                | KNorm.Add(l, r) -> Some(l, r)
+                | _ -> None)
+            
+        let as_f_add x =
+            env.TryFind x
+            |> Option.bind (function
+                | KNorm.FAdd(l, r) -> Some(l, r)
+                | _ -> None)
+        
+        let as_f_mul x =
+            env.TryFind x
+            |> Option.bind (function
+                | KNorm.FMul(l, r) -> Some(l, r)
+                | _ -> None)
 
         match e with
         | KNorm.Var x ->
@@ -37,8 +57,19 @@ module ConstFolding =
             | Some x -> KNorm.Int -x
             | _ -> e
         | KNorm.Add(l, r) ->
-            match l |> as_int, r |> as_int with
-            | Some l, Some r -> KNorm.Int(l + r)
+            match l |> as_int, r |> as_int, r |> as_add with
+            | Some l, Some r, _ -> KNorm.Int(l + r)
+            // В случае если справа целочисленная константа,
+            // переносим её влево (операция сложения коммутативна)
+            | None, Some _, _ -> KNorm.Add(r, l)
+            // Сворачиваем специальный случай цепочки из сумм,
+            // где обе суммы начинаются с констант
+            | Some l, _, Some(l', r) ->
+                match l' |> as_int with
+                | Some l' ->
+                    let l'' = Id.gen_tmp Type.IntType
+                    KNorm.Let((l'', Type.IntType), KNorm.Int (l + l'), KNorm.Add(l'', r)) 
+                | _ -> e
             | _ -> e
         | KNorm.Sub(l, r) ->
             match l |> as_int, r |> as_int with
@@ -51,16 +82,38 @@ module ConstFolding =
             | Some x -> KNorm.Float -x
             | _ -> e
         | KNorm.FAdd(l, r) ->
-            match l |> as_float, r |> as_float with
-            | Some l, Some r -> KNorm.Float(l + r)
+            match l |> as_float, r |> as_float, r |> as_f_add with
+            | Some l, Some r, _ -> KNorm.Float(l + r)
+            // В случае если справа константа,
+            // переносим её влево (операция сложения коммутативна)
+            | None, Some _, _ -> KNorm.FAdd(r, l)
+            // Сворачиваем специальный случай цепочки из суии,
+            // где обе суммы начинаются с констант
+            | Some l, _, Some(l', r) ->
+                match l' |> as_float with
+                | Some l' ->
+                    let l'' = Id.gen_tmp Type.IntType
+                    KNorm.Let((l'', Type.IntType), KNorm.Float (l + l'), KNorm.FAdd(l'', r)) 
+                | _ -> e
             | _ -> e
         | KNorm.FSub(l, r) ->
             match l |> as_float, r |> as_float with
             | Some l, Some r -> KNorm.Float(l - r)
             | _ -> e
         | KNorm.FMul(l, r) ->
-            match l |> as_float, r |> as_float with
-            | Some l, Some r -> KNorm.Float(l * r)
+            match l |> as_float, r |> as_float, r |> as_f_mul with
+            | Some l, Some r, _ -> KNorm.Float(l * r)
+            // В случае если справа константа,
+            // переносим её влево (операция умножения коммутативна)
+            | None, Some _, _ -> KNorm.FMul(r, l)
+            // Сворачиваем специальный случай цепочки из произведений,
+            // где оба произведения начинаются с констант
+            | Some l, _, Some(l', r) ->
+                match l' |> as_float with
+                | Some l' ->
+                    let l'' = Id.gen_tmp Type.IntType
+                    KNorm.Let((l'', Type.IntType), KNorm.Float (l * l'), KNorm.FMul(l'', r)) 
+                | _ -> e
             | _ -> e
         | KNorm.FDiv(l, r) ->
             match l |> as_float, r |> as_float with
